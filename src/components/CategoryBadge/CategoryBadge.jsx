@@ -1,12 +1,13 @@
-import { 
-  Droplet, 
-  Building2, 
-  Stethoscope, 
-  Shield, 
-  Leaf, 
-  FileQuestion 
+import {
+  Droplet,
+  Building2,
+  Stethoscope,
+  Shield,
+  Leaf,
+  FileQuestion
 } from 'lucide-react'
 import './CategoryBadge.css'
+import PropTypes from 'prop-types'
 
 const CategoryBadge = ({ category }) => {
   const getCategoryInfo = (categoryId) => {
@@ -42,22 +43,25 @@ const CategoryBadge = ({ category }) => {
         color: '#6b7280'
       }
     }
-    
+
     return categories[categoryId] || categories.otros
   }
-  
+
   const categoryInfo = getCategoryInfo(category)
   const Icon = categoryInfo.icon
-  
+
   return (
-    <span 
-      className="category-badge" 
+    <span
+      className="category-badge"
       style={{ backgroundColor: `${categoryInfo.color}20`, color: categoryInfo.color }}
     >
       <Icon size={16} />
       <span>{categoryInfo.name}</span>
     </span>
   )
+}
+CategoryBadge.propTypes = {
+  category: PropTypes.string.isRequired
 }
 
 export default CategoryBadge
