@@ -3,12 +3,13 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { LogIn, X } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import AlertModal from '../AlertModal/AlertModal'
+import PropTypes from 'prop-types'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth()
   const [showModal, setShowModal] = useState(true)
   const location = useLocation()
-  
+
   if (isLoading) {
     return (
       <div className="loading-container">
@@ -16,7 +17,7 @@ const ProtectedRoute = ({ children }) => {
       </div>
     )
   }
-  
+
   if (!isAuthenticated) {
     return (
       <>
@@ -46,8 +47,11 @@ const ProtectedRoute = ({ children }) => {
       </>
     )
   }
-  
+
   return children
+}
+ProtectedRoute.propTypes = {
+  children: PropTypes.node
 }
 
 export default ProtectedRoute

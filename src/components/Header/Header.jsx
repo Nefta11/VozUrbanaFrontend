@@ -9,7 +9,7 @@ import './Header.css'
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
-  const { isAuthenticated, user, logout, isAdmin } = useAuth()
+  const { isAuthenticated, logout, isAdmin } = useAuth()
   const { showNotification } = useNotification()
   const navigate = useNavigate()
   

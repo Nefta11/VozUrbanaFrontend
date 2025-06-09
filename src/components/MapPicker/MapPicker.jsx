@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
+import PropTypes from 'prop-types'
 import './MapPicker.css'
 
 const LocationMarker = ({ position, setPosition, onLocationSelect }) => {
@@ -83,6 +84,19 @@ const MapPicker = ({ initialPosition, onLocationSelect }) => {
       </MapContainer>
     </div>
   )
+}
+LocationMarker.propTypes = {
+  position: PropTypes.shape({
+    lat: PropTypes.number,
+    lng: PropTypes.number
+  }),
+  setPosition: PropTypes.func.isRequired,
+  onLocationSelect: PropTypes.func.isRequired
+}
+
+MapPicker.propTypes = {
+  initialPosition: PropTypes.arrayOf(PropTypes.number),
+  onLocationSelect: PropTypes.func.isRequired
 }
 
 export default MapPicker
