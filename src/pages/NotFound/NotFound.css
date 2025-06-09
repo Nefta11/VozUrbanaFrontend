@@ -1,0 +1,77 @@
+.not-found-page {
+  padding: 4rem 0;
+  text-align: center;
+}
+
+.not-found-content {
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: white;
+  border-radius: 8px;
+  padding: 3rem 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.not-found-content h1 {
+  font-size: 6rem;
+  margin: 0;
+  color: var(--primary-color);
+  line-height: 1;
+}
+
+.not-found-content h2 {
+  margin: 1rem 0;
+  font-size: 2rem;
+}
+
+.not-found-content p {
+  color: #64748b;
+  margin-bottom: 2rem;
+}
+
+.not-found-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.not-found-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.not-found-button.primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.not-found-button.primary:hover {
+  background-color: #1d4ed8;
+}
+
+.not-found-button.secondary {
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+.not-found-button.secondary:hover {
+  background-color: #f1f5f9;
+  color: var(--text-color);
+}
+
+@media (min-width: 640px) {
+  .not-found-actions {
+    flex-direction: row;
+    max-width: none;
+  }
+}

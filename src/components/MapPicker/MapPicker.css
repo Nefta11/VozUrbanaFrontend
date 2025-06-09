@@ -1,0 +1,110 @@
+.map-picker {
+  height: 100%;
+  width: 100%;
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.map-instructions {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background-color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 50px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-size: 0.95rem;
+  text-align: center;
+  max-width: 90%;
+  animation: fadeInDown 0.5s ease;
+}
+
+.instruction-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.instruction-icon {
+  font-size: 1.25rem;
+}
+
+/* Custom marker styles */
+.picker-marker {
+  background: none;
+  border: none;
+}
+
+.picker-marker-icon {
+  width: 30px;
+  height: 42px;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.picker-marker-icon:hover {
+  transform: scale(1.1);
+}
+
+.picker-marker-pin {
+  width: 30px;
+  height: 42px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--primary-color);
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+}
+
+.picker-marker-pin::after {
+  content: '';
+  width: 24px;
+  height: 24px;
+  margin: 3px 0 0 3px;
+  background: white;
+  position: absolute;
+  border-radius: 50%;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.leaflet-control-container .leaflet-control {
+  margin: 1rem;
+}
+
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.leaflet-control-zoom a {
+  background-color: white !important;
+  color: #1e293b !important;
+  transition: all 0.3s ease !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: #f8fafc !important;
+  color: var(--primary-color) !important;
+}
