@@ -27,7 +27,6 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [updatingReportId, setUpdatingReportId] = useState(null)
   
-  // Redirect if not admin
   useEffect(() => {
     if (!isAdmin) {
       showNotification('Acceso denegado. Solo administradores.', 'error')
@@ -35,7 +34,6 @@ const AdminDashboard = () => {
     }
   }, [isAdmin, navigate, showNotification])
   
-  // Filter reports by status
   useEffect(() => {
     if (reports.length > 0) {
       setIsLoading(true)

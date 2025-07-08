@@ -10,7 +10,7 @@ const Register = () => {
   const { register } = useAuth()
   const { showNotification } = useNotification()
   const navigate = useNavigate()
-  
+
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
@@ -20,14 +20,13 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState({})
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-  
+
   const updateFormData = (field, value) => {
     setFormData({
       ...formData,
       [field]: value
     })
-    
-    // Clear error for this field if any
+
     if (errors[field]) {
       setErrors({
         ...errors,
@@ -35,52 +34,52 @@ const Register = () => {
       })
     }
   }
-  
+
   const validateForm = () => {
     const newErrors = {}
-    
+
     if (!formData.nombre.trim()) {
       newErrors.nombre = 'El nombre es obligatorio'
     }
-    
+
     if (!formData.email.trim()) {
       newErrors.email = 'El correo electrónico es obligatorio'
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Correo electrónico inválido'
     }
-    
+
     if (!formData.password) {
       newErrors.password = 'La contraseña es obligatoria'
     } else if (formData.password.length < 6) {
       newErrors.password = 'La contraseña debe tener al menos 6 caracteres'
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Las contraseñas no coinciden'
     }
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
-    
+
     setIsLoading(true)
-    
+
     try {
       const userData = {
         nombre: formData.nombre,
         email: formData.email,
         password: formData.password
       }
-      
+
       const user = await register(userData)
-      
+
       if (user) {
         setShowSuccessModal(true)
       } else {
@@ -92,7 +91,7 @@ const Register = () => {
       setIsLoading(false)
     }
   }
-  
+
   return (
     <div className="auth-page">
       <div className="auth-container">
@@ -100,14 +99,14 @@ const Register = () => {
           <h1>Crear Cuenta</h1>
           <p>Únete a Voz Urbana y ayuda a mejorar tu comunidad</p>
         </div>
-        
+
         {errors.general && (
           <div className="auth-error">
             <AlertCircle size={18} />
             {errors.general}
           </div>
         )}
-        
+
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="nombre">
@@ -130,7 +129,7 @@ const Register = () => {
               </span>
             )}
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="email">
               <Mail size={18} />
@@ -152,7 +151,7 @@ const Register = () => {
               </span>
             )}
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="password">
               <Lock size={18} />
@@ -174,7 +173,7 @@ const Register = () => {
               </span>
             )}
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="confirmPassword">
               <Lock size={18} />
@@ -196,9 +195,9 @@ const Register = () => {
               </span>
             )}
           </div>
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             className="auth-button"
             disabled={isLoading}
           >
@@ -215,7 +214,7 @@ const Register = () => {
             )}
           </button>
         </form>
-        
+
         <div className="auth-footer">
           <p>¿Ya tienes una cuenta? <Link to="/login">Inicia sesión</Link></p>
         </div>

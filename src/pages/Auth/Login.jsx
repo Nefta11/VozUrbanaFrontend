@@ -11,7 +11,7 @@ const Login = () => {
   const { showNotification } = useNotification()
   const navigate = useNavigate()
   const location = useLocation()
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -19,17 +19,15 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState({})
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-  
-  // Get redirect path from location state or default to home
+
   const from = location.state?.from?.pathname || "/"
-  
+
   const updateFormData = (field, value) => {
     setFormData({
       ...formData,
       [field]: value
     })
-    
-    // Clear error for this field if any
+
     if (errors[field]) {
       setErrors({
         ...errors,
@@ -37,36 +35,36 @@ const Login = () => {
       })
     }
   }
-  
+
   const validateForm = () => {
     const newErrors = {}
-    
+
     if (!formData.email.trim()) {
       newErrors.email = 'El correo electrónico es obligatorio'
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Correo electrónico inválido'
     }
-    
+
     if (!formData.password) {
       newErrors.password = 'La contraseña es obligatoria'
     }
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
-    
+
     setIsLoading(true)
-    
+
     try {
       const user = await login(formData.email, formData.password)
-      
+
       if (user) {
         setShowSuccessModal(true)
       } else {
@@ -78,7 +76,7 @@ const Login = () => {
       setIsLoading(false)
     }
   }
-  
+
   return (
     <div className="auth-page">
       <div className="auth-container">
@@ -86,14 +84,14 @@ const Login = () => {
           <h1>¡Bienvenido de nuevo!</h1>
           <p>Inicia sesión para acceder a tu cuenta y gestionar tus reportes</p>
         </div>
-        
+
         {errors.general && (
           <div className="auth-error">
             <AlertCircle size={18} />
             {errors.general}
           </div>
         )}
-        
+
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="email">
@@ -116,7 +114,7 @@ const Login = () => {
               </span>
             )}
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="password">
               <Lock size={18} />
@@ -138,9 +136,9 @@ const Login = () => {
               </span>
             )}
           </div>
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             className="auth-button"
             disabled={isLoading}
           >
@@ -157,13 +155,13 @@ const Login = () => {
             )}
           </button>
         </form>
-        
+
         <div className="auth-footer">
           <p>¿No tienes una cuenta? <Link to="/register">Regístrate aquí</Link></p>
         </div>
-        
+
         <div className="auth-divider">O prueba con una cuenta de demostración</div>
-        
+
         <div className="test-accounts">
           <h3>Cuentas de prueba disponibles:</h3>
           <ul>

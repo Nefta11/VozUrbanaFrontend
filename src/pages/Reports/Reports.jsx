@@ -10,9 +10,8 @@ import './Reports.css'
 const Reports = () => {
   const { filteredReports, isLoading, error, setFilters, filters } = useReports()
   const location = useLocation()
-  const [viewMode, setViewMode] = useState('list') // 'list' or 'map'
+  const [viewMode, setViewMode] = useState('list') 
   
-  // Parse URL query parameters
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const category = params.get('category')
