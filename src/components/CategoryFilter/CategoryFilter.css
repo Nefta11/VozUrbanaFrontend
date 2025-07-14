@@ -88,22 +88,25 @@
 }
 
 .clear-filters-button {
-  background-color: transparent;
-  border: 1px solid #e2e8f0;
-  color: #64748b;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: 1px solid #059669;
+  color: white;
   padding: 0.65rem 1rem;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: all 0.3s ease;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
   width: 100%;
   margin-top: 0.4rem;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
 }
 
 .clear-filters-button:hover {
-  background-color: #f1f5f9;
-  color: var(--text-color);
+  background: linear-gradient(135deg, #059669, #047857);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 @media (min-width: 640px) {

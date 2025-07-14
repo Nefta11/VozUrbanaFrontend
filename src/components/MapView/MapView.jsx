@@ -14,6 +14,19 @@ const MapView = ({ height = '500px', zoom = 12, showPopups = true }) => {
   const { location, error: locationError } = useGeolocation()
   const [mapError, setMapError] = useState(null)
   const [mapCenter, setMapCenter] = useState([20.2745, -97.9557]) // Default to Xicotepec
+  const [showLocationError, setShowLocationError] = useState(false)
+
+  // Controla la visibilidad del mensaje de error de ubicación
+  useEffect(() => {
+    if (locationError) {
+      setShowLocationError(true)
+      const timer = setTimeout(() => {
+        setShowLocationError(false)
+      }, 5000) // 5 segundos
+
+      return () => clearTimeout(timer)
+    }
+  }, [locationError])
 
   // Establece el centro del mapa basado en la ubicación del usuario si está dentro de la región
   useEffect(() => {
@@ -84,10 +97,12 @@ const MapView = ({ height = '500px', zoom = 12, showPopups = true }) => {
   if (locationError) {
     return (
       <div className="map-container" style={{ height }}>
-        {/* Mostrar mensaje de ubicación pero seguir mostrando el mapa */}
-        <div className="location-warning">
-          <p>{locationError}</p>
-        </div>
+        {/* Mostrar mensaje de ubicación temporalmente */}
+        {showLocationError && (
+          <div className="location-warning">
+            <p>{locationError}</p>
+          </div>
+        )}
         <MapContainer
           center={mapCenter}
           zoom={zoom}
@@ -139,6 +154,12 @@ const MapView = ({ height = '500px', zoom = 12, showPopups = true }) => {
 
   return (
     <div className="map-container" style={{ height }}>
+      {/* Mostrar mensaje de ubicación temporalmente si hay error */}
+      {showLocationError && locationError && (
+        <div className="location-warning">
+          <p>{locationError}</p>
+        </div>
+      )}
       <MapContainer
         center={mapCenter}
         zoom={zoom}
