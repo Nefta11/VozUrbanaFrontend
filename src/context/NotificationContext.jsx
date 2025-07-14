@@ -1,4 +1,5 @@
 import { createContext, useState, useCallback } from 'react'
+import PropTypes from 'prop-types'
 
 export const NotificationContext = createContext()
 
@@ -29,4 +30,9 @@ export const NotificationProvider = ({ children }) => {
       {children}
     </NotificationContext.Provider>
   )
+}
+
+// Validación de PropTypes
+NotificationProvider.propTypes = {
+  children: PropTypes.node.isRequired
 }
