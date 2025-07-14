@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback, memo } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import {
   Menu,
@@ -15,37 +15,12 @@ import {
 import { useAuth } from '../../hooks/useAuth'
 import { useNotification } from '../../hooks/useNotification'
 import AlertModal from '../AlertModal/AlertModal'
+import PropTypes from 'prop-types'
 import './Header.css'
 
-const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [showLogoutModal, setShowLogoutModal] = useState(false)
-  const { isAuthenticated, logout, isAdmin } = useAuth()
-  const { showNotification } = useNotification()
-  const navigate = useNavigate()
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen)
-  }
-
-  const closeMenu = () => {
-    setIsMenuOpen(false)
-  }
-
-  const handleLogoutClick = () => {
-    setShowLogoutModal(true)
-    closeMenu()
-  }
-
-  const handleLogoutConfirm = () => {
-    logout()
-    setShowLogoutModal(false)
-    showNotification('Has cerrado sesión correctamente', 'success')
-    navigate('/')
-  }
-
-  // Navigation items data
-  const mainNavItems = [
+// Configuración de navegación - movida fuera del componente
+const NAVIGATION_CONFIG = {
+  main: [
     {
       to: '/',
       label: 'Inicio',
@@ -61,100 +36,196 @@ const Header = () => {
       label: 'Crear Reporte',
       icon: PlusCircle
     }
-  ]
-
-  const authenticatedNavItems = [
-    ...(isAdmin ? [{
-      to: '/admin',
-      label: 'Panel Admin',
-      icon: Settings,
-      className: 'admin-link'
-    }] : []),
+  ],
+  auth: [
     {
+      to: '/login',
+      label: 'Iniciar Sesión',
+      icon: LogIn,
+      type: 'login'
+    },
+    {
+      to: '/register',
+      label: 'Registrarse',
+      icon: UserPlus,
+      type: 'register'
+    }
+  ]
+}
+
+// Componente para renderizar elementos de navegación - elimina repetición
+const NavItem = memo(({ item, onClick, className = '' }) => (
+  <li className="nav-item">
+    <NavLink
+      to={item.to}
+      onClick={onClick}
+      className={className}
+      aria-label={`Ir a ${item.label}`}
+    >
+      <item.icon size={18} aria-hidden="true" />
+      <span>{item.label}</span>
+    </NavLink>
+  </li>
+))
+
+NavItem.displayName = 'NavItem'
+
+// Componente para botones de autenticación
+const AuthButtons = memo(({ onClose }) => (
+  <li className="nav-item">
+    <div className="auth-buttons">
+      {NAVIGATION_CONFIG.auth.map((item) => (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          onClick={onClose}
+          className={`${item.type}-button`}
+          aria-label={item.label}
+        >
+          <item.icon size={18} aria-hidden="true" />
+          <span>{item.label}</span>
+        </NavLink>
+      ))}
+    </div>
+  </li>
+))
+
+AuthButtons.displayName = 'AuthButtons'
+
+// Componente principal del header
+const Header = memo(() => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const { isAuthenticated, logout, isAdmin } = useAuth()
+  const { showNotification } = useNotification()
+  const navigate = useNavigate()
+
+  // Handlers optimizados con useCallback
+  const toggleMenu = useCallback(() => {
+    setIsMenuOpen(prev => !prev)
+  }, [])
+
+  const closeMenu = useCallback(() => {
+    setIsMenuOpen(false)
+  }, [])
+
+  const handleLogoutClick = useCallback(() => {
+    setShowLogoutModal(true)
+    closeMenu()
+  }, [closeMenu])
+
+  const handleLogoutConfirm = useCallback(() => {
+    logout()
+    setShowLogoutModal(false)
+    showNotification('Has cerrado sesión correctamente', 'success')
+    navigate('/')
+  }, [logout, showNotification, navigate])
+
+  const handleLogoutCancel = useCallback(() => {
+    setShowLogoutModal(false)
+  }, [])
+
+  // Configuración de elementos de navegación autenticados
+  const getAuthenticatedNavItems = useCallback(() => {
+    const items = []
+
+    if (isAdmin) {
+      items.push({
+        to: '/admin',
+        label: 'Panel Admin',
+        icon: Settings,
+        className: 'admin-link'
+      })
+    }
+
+    items.push({
       to: '/profile',
       label: 'Mi Perfil',
       icon: User,
       className: 'profile-link'
-    }
-  ]
+    })
+
+    return items
+  }, [isAdmin])
 
   return (
-    <header className="header">
+    <header className="header" role="banner">
       <div className="header-container">
-        {/* Logo Section */}
+        {/* Sección del Logo */}
         <div className="logo">
-          <Link to="/" onClick={closeMenu}>
+          <Link
+            to="/"
+            onClick={closeMenu}
+            aria-label="Ir al inicio - Voz Urbana"
+          >
             <div className="logo-content">
-              <span className="logo-icon">🏙️</span>
+              <img
+                src="/src/assets/logoVozUrbana.png"
+                alt="Voz Urbana"
+                className="logo-icon"
+              />
               <h1>Voz Urbana</h1>
             </div>
           </Link>
         </div>
 
-        {/* Mobile Menu Toggle */}
+        {/* Toggle del Menú Móvil */}
         <button
           className="menu-toggle"
           aria-label={isMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+          aria-expanded={isMenuOpen}
           onClick={toggleMenu}
         >
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
-        {/* Navigation */}
-        <nav className={`nav ${isMenuOpen ? 'nav-open' : ''}`}>
-          <ul className="nav-list">
-            {/* Main Navigation Items */}
-            {mainNavItems.map((item) => (
-              <li key={item.to} className="nav-item">
-                <NavLink to={item.to} onClick={closeMenu}>
-                  <item.icon size={18} />
-                  <span>{item.label}</span>
-                </NavLink>
-              </li>
+        {/* Navegación */}
+        <nav
+          className={`nav ${isMenuOpen ? 'nav-open' : ''}`}
+          role="navigation"
+          aria-label="Navegación principal"
+        >
+          <ul className="nav-list" role="menubar">
+            {/* Elementos de Navegación Principal */}
+            {NAVIGATION_CONFIG.main.map((item) => (
+              <NavItem
+                key={item.to}
+                item={item}
+                onClick={closeMenu}
+              />
             ))}
 
-            {/* Authenticated User Navigation */}
+            {/* Navegación de Usuario Autenticado */}
             {isAuthenticated ? (
               <>
-                {authenticatedNavItems.map((item) => (
-                  <li key={item.to} className="nav-item">
-                    <NavLink
-                      to={item.to}
-                      onClick={closeMenu}
-                      className={item.className || ''}
-                    >
-                      <item.icon size={18} />
-                      <span>{item.label}</span>
-                    </NavLink>
-                  </li>
+                {getAuthenticatedNavItems().map((item) => (
+                  <NavItem
+                    key={item.to}
+                    item={item}
+                    onClick={closeMenu}
+                    className={item.className}
+                  />
                 ))}
                 <li className="nav-item">
-                  <button className="logout-button" onClick={handleLogoutClick}>
-                    <LogOut size={18} />
+                  <button
+                    className="logout-button"
+                    onClick={handleLogoutClick}
+                    aria-label="Cerrar sesión"
+                  >
+                    <LogOut size={18} aria-hidden="true" />
                     <span>Cerrar Sesión</span>
                   </button>
                 </li>
               </>
             ) : (
-              /* Authentication Buttons */
-              <li className="nav-item">
-                <div className="auth-buttons">
-                  <NavLink to="/login" onClick={closeMenu} className="login-button">
-                    <LogIn size={18} />
-                    <span>Iniciar Sesión</span>
-                  </NavLink>
-                  <NavLink to="/register" onClick={closeMenu} className="register-button">
-                    <UserPlus size={18} />
-                    <span>Registrarse</span>
-                  </NavLink>
-                </div>
-              </li>
+              // Botones de Autenticación
+              <AuthButtons onClose={closeMenu} />
             )}
           </ul>
         </nav>
       </div>
 
-      {/* Logout Confirmation Modal */}
+      {/* Modal de Confirmación de Logout */}
       <AlertModal
         isOpen={showLogoutModal}
         type="warning"
@@ -167,12 +238,30 @@ const Header = () => {
         }}
         secondaryAction={{
           label: 'Cancelar',
-          onClick: () => setShowLogoutModal(false),
+          onClick: handleLogoutCancel,
           icon: <X size={18} />
         }}
+        onClose={handleLogoutCancel}
       />
     </header>
   )
+})
+
+Header.displayName = 'Header'
+
+// PropTypes para subcomponentes
+NavItem.propTypes = {
+  item: PropTypes.shape({
+    to: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    icon: PropTypes.elementType.isRequired
+  }).isRequired,
+  onClick: PropTypes.func.isRequired,
+  className: PropTypes.string
+}
+
+AuthButtons.propTypes = {
+  onClose: PropTypes.func.isRequired
 }
 
 export default Header

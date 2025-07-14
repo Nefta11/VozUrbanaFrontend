@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, memo, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ThumbsUp,
@@ -22,152 +22,222 @@ import CategoryBadge from '../CategoryBadge/CategoryBadge'
 import './ReportCard.css'
 import PropTypes from 'prop-types'
 
-const ReportCard = ({ report }) => {
+// Configuración externa para evitar recreación en cada render
+const REPORT_CARD_CONFIG = {
+  icons: {
+    size: {
+      small: 14,
+      medium: 16,
+      large: 18,
+      xlarge: 48
+    }
+  },
+  votes: {
+    messages: {
+      up: 'Voto positivo registrado',
+      down: 'Voto negativo registrado',
+      loginRequired: 'Debes iniciar sesión para votar',
+      error: 'Error al registrar el voto'
+    }
+  },
+  status: {
+    nuevo: {
+      text: 'Nuevo',
+      icon: AlertCircle,
+      color: 'blue'
+    },
+    en_proceso: {
+      text: 'En Proceso',
+      icon: Clock,
+      color: 'yellow'
+    },
+    resuelto: {
+      text: 'Resuelto',
+      icon: CheckCircle,
+      color: 'green'
+    },
+    cerrado: {
+      text: 'Cerrado',
+      icon: CheckCircle,
+      color: 'gray'
+    }
+  },
+  priority: {
+    alta: {
+      text: 'Alta Prioridad',
+      color: 'red',
+      icon: TrendingUp
+    },
+    media: {
+      text: 'Prioridad Media',
+      color: 'yellow',
+      icon: TrendingUp
+    },
+    baja: {
+      text: 'Baja Prioridad',
+      color: 'green',
+      icon: TrendingUp
+    }
+  }
+}
+
+// Función utilitaria para formatear fechas
+const formatReportDate = (dateString) => {
+  try {
+    return format(new Date(dateString), 'dd MMM yyyy', { locale: es })
+  } catch (error) {
+    console.error('Error formateando fecha:', error)
+    return dateString
+  }
+}
+
+// Función utilitaria para obtener información del estado
+const getStatusInfo = (status) => {
+  return REPORT_CARD_CONFIG.status[status] || REPORT_CARD_CONFIG.status.nuevo
+}
+
+// Función utilitaria para obtener información de prioridad
+const getPriorityInfo = (priority) => {
+  return REPORT_CARD_CONFIG.priority[priority] || REPORT_CARD_CONFIG.priority.media
+}
+
+// Componente de imagen optimizado
+const ReportImage = memo(({ report, onImageLoad, onImageError, imageLoaded, imageError }) => {
+  if (report.imagen && !imageError) {
+    return (
+      <>
+        {!imageLoaded && (
+          <div className="loading-shimmer" style={{ height: '100%' }} aria-label="Cargando imagen" />
+        )}
+        <img
+          src={report.imagen}
+          alt={`Imagen del reporte: ${report.titulo}`}
+          loading="lazy"
+          onLoad={onImageLoad}
+          onError={onImageError}
+          style={{ display: imageLoaded ? 'block' : 'none' }}
+        />
+      </>
+    )
+  }
+
+  return (
+    <div className="no-image-placeholder">
+      <ImageIcon size={REPORT_CARD_CONFIG.icons.size.xlarge} color="#cbd5e1" aria-hidden="true" />
+      <span>Sin imagen</span>
+    </div>
+  )
+})
+ReportImage.displayName = 'ReportImage'
+
+// Componente de badge de estado optimizado
+const StatusBadge = memo(({ status }) => {
+  const statusInfo = getStatusInfo(status)
+  const StatusIcon = statusInfo.icon
+
+  return (
+    <div
+      className={`report-status status-${status}`}
+      title={`Estado: ${statusInfo.text}`}
+      role="img"
+      aria-label={`Estado: ${statusInfo.text}`}
+    >
+      <StatusIcon size={REPORT_CARD_CONFIG.icons.size.medium} aria-hidden="true" />
+      <span>{statusInfo.text}</span>
+    </div>
+  )
+})
+StatusBadge.displayName = 'StatusBadge'
+
+// Componente de indicador de prioridad optimizado
+const PriorityIndicator = memo(({ priority }) => {
+  const priorityInfo = getPriorityInfo(priority)
+
+  return (
+    <div
+      className={`priority-indicator priority-${priority}`}
+      title={priorityInfo.text}
+      role="img"
+      aria-label={priorityInfo.text}
+    />
+  )
+})
+PriorityIndicator.displayName = 'PriorityIndicator'
+// Componente principal optimizado
+const ReportCard = memo(({ report }) => {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
   const { isAuthenticated, user } = useAuth()
   const { voteReport } = useReports()
   const { showNotification } = useNotification()
 
-  const handleVote = async (voteType) => {
+  // Manejadores optimizados para la imagen
+  const handleImageLoad = useCallback(() => {
+    setImageLoaded(true)
+  }, [])
+
+  const handleImageError = useCallback(() => {
+    setImageError(true)
+    setImageLoaded(true)
+  }, [])
+
+  // Manejador optimizado para votos
+  const handleVote = useCallback(async (voteType) => {
     if (!isAuthenticated) {
-      showNotification('Debes iniciar sesión para votar', 'warning')
+      showNotification(REPORT_CARD_CONFIG.votes.messages.loginRequired, 'warning')
       return
     }
 
     try {
       await voteReport(report.id, voteType, user.id)
-      const message = voteType === 'up' ? 'Voto positivo registrado' : 'Voto negativo registrado'
+      const message = voteType === 'up' 
+        ? REPORT_CARD_CONFIG.votes.messages.up 
+        : REPORT_CARD_CONFIG.votes.messages.down
       showNotification(message, 'success')
     } catch (error) {
-      console.error('Error voting:', error)
-      showNotification('Error al registrar el voto', 'error')
+      console.error('Error votando:', error)
+      showNotification(REPORT_CARD_CONFIG.votes.messages.error, 'error')
     }
-  }
+  }, [isAuthenticated, showNotification, voteReport, report.id, user?.id])
 
-  const formatDate = (dateString) => {
-    try {
-      return format(new Date(dateString), 'dd MMM yyyy', { locale: es })
-    } catch (error) {
-      console.error('Error formatting date:', error)
-      return dateString
-    }
-  }
-
-  const getStatusInfo = (status) => {
-    const statusMap = {
-      nuevo: {
-        text: 'Nuevo',
-        icon: AlertCircle,
-        color: 'blue'
-      },
-      en_proceso: {
-        text: 'En Proceso',
-        icon: Clock,
-        color: 'yellow'
-      },
-      resuelto: {
-        text: 'Resuelto',
-        icon: CheckCircle,
-        color: 'green'
-      },
-      cerrado: {
-        text: 'Cerrado',
-        icon: CheckCircle,
-        color: 'gray'
-      }
-    }
-    return statusMap[status] || statusMap.nuevo
-  }
-
-  const getPriorityInfo = (priority) => {
-    const priorityMap = {
-      alta: {
-        text: 'Alta Prioridad',
-        color: 'red',
-        icon: TrendingUp
-      },
-      media: {
-        text: 'Prioridad Media',
-        color: 'yellow',
-        icon: TrendingUp
-      },
-      baja: {
-        text: 'Baja Prioridad',
-        color: 'green',
-        icon: TrendingUp
-      }
-    }
-    return priorityMap[priority] || priorityMap.media
-  }
-
-  const getUserVote = () => {
+  // Cálculos memorizados
+  const userVote = useMemo(() => {
     if (!isAuthenticated || !user) return null
     return report.votos_usuarios?.[user.id] || null
-  }
+  }, [isAuthenticated, user, report.votos_usuarios])
 
-  const handleImageLoad = () => {
-    setImageLoaded(true)
-  }
+  const totalVotes = useMemo(() => {
+    return report.votos_positivos + report.votos_negativos
+  }, [report.votos_positivos, report.votos_negativos])
 
-  const handleImageError = () => {
-    setImageError(true)
-    setImageLoaded(true)
-  }
+  const commentsCount = useMemo(() => {
+    return report.comentarios?.length || 0
+  }, [report.comentarios])
 
-  const statusInfo = getStatusInfo(report.estado)
-  const priorityInfo = getPriorityInfo(report.prioridad)
-  const StatusIcon = statusInfo.icon
-  const userVote = getUserVote()
-  const totalVotes = report.votos_positivos + report.votos_negativos
-  const commentsCount = report.comentarios?.length || 0
+  const formattedDate = useMemo(() => {
+    return formatReportDate(report.fecha_creacion)
+  }, [report.fecha_creacion])
 
   return (
     <article className={`report-card priority-${report.prioridad}`}>
-      {/* Priority Indicator */}
-      <div
-        className={`priority-indicator priority-${report.prioridad}`}
-        title={priorityInfo.text}
-        role="img"
-        aria-label={priorityInfo.text}
-      />
+      {/* Indicador de prioridad */}
+      <PriorityIndicator priority={report.prioridad} />
 
-      {/* Report Image Section */}
+      {/* Sección de imagen del reporte */}
       <div className="report-image">
-        {report.imagen && !imageError ? (
-          <>
-            {!imageLoaded && (
-              <div className="loading-shimmer" style={{ height: '100%' }} />
-            )}
-            <img
-              src={report.imagen}
-              alt={`Imagen del reporte: ${report.titulo}`}
-              loading="lazy"
-              onLoad={handleImageLoad}
-              onError={handleImageError}
-              style={{ display: imageLoaded ? 'block' : 'none' }}
-            />
-          </>
-        ) : (
-          <div className="no-image-placeholder">
-            <ImageIcon size={48} color="#cbd5e1" />
-            <span>Sin imagen</span>
-          </div>
-        )}
-
-        {/* Status Badge */}
-        <div
-          className={`report-status status-${report.estado}`}
-          title={`Estado: ${statusInfo.text}`}
-        >
-          <StatusIcon size={16} />
-          <span>{statusInfo.text}</span>
-        </div>
+        <ReportImage
+          report={report}
+          onImageLoad={handleImageLoad}
+          onImageError={handleImageError}
+          imageLoaded={imageLoaded}
+          imageError={imageError}
+        />
+        <StatusBadge status={report.estado} />
       </div>
 
-      {/* Report Content */}
+      {/* Contenido del reporte */}
       <div className="report-content">
-        {/* Title */}
+        {/* Título */}
         <h3 className="report-title">
           <Link
             to={`/reports/${report.id}`}
@@ -177,29 +247,29 @@ const ReportCard = ({ report }) => {
           </Link>
         </h3>
 
-        {/* Meta Information */}
+        {/* Meta información */}
         <div className="report-meta">
           <CategoryBadge category={report.categoria} />
-          <div className="report-date" title={`Fecha de creación: ${formatDate(report.fecha_creacion)}`}>
-            <Calendar size={16} />
-            <span>{formatDate(report.fecha_creacion)}</span>
+          <div className="report-date" title={`Fecha de creación: ${formattedDate}`}>
+            <Calendar size={REPORT_CARD_CONFIG.icons.size.medium} aria-hidden="true" />
+            <span>{formattedDate}</span>
           </div>
         </div>
 
-        {/* Description */}
+        {/* Descripción */}
         <p className="report-description" title={report.descripcion}>
           {report.descripcion}
         </p>
 
-        {/* Location */}
+        {/* Ubicación */}
         <div className="report-location" title={`Ubicación: ${report.ubicacion}`}>
-          <MapPin size={16} className="location-icon" />
+          <MapPin size={REPORT_CARD_CONFIG.icons.size.medium} className="location-icon" aria-hidden="true" />
           <span>{report.ubicacion}</span>
         </div>
 
-        {/* Footer with Actions */}
+        {/* Footer con acciones */}
         <footer className="report-footer">
-          {/* Voting Section */}
+          {/* Sección de votación */}
           <div className="report-votes" role="group" aria-label="Votación del reporte">
             <button
               className={`vote-button vote-up ${userVote === 'up' ? 'active' : ''}`}
@@ -207,8 +277,9 @@ const ReportCard = ({ report }) => {
               aria-label={`Votar positivo (${report.votos_positivos} votos)`}
               title={`${report.votos_positivos} votos positivos`}
               disabled={!isAuthenticated}
+              type="button"
             >
-              <ThumbsUp size={18} />
+              <ThumbsUp size={REPORT_CARD_CONFIG.icons.size.large} aria-hidden="true" />
               <span>{report.votos_positivos}</span>
             </button>
 
@@ -218,36 +289,61 @@ const ReportCard = ({ report }) => {
               aria-label={`Votar negativo (${report.votos_negativos} votos)`}
               title={`${report.votos_negativos} votos negativos`}
               disabled={!isAuthenticated}
+              type="button"
             >
-              <ThumbsDown size={18} />
+              <ThumbsDown size={REPORT_CARD_CONFIG.icons.size.large} aria-hidden="true" />
               <span>{report.votos_negativos}</span>
             </button>
           </div>
 
-          {/* Comments Link */}
+          {/* Enlace a comentarios */}
           <Link
             to={`/reports/${report.id}`}
             className="report-comments"
             aria-label={`Ver ${commentsCount} comentarios del reporte`}
             title={`${commentsCount} comentarios`}
           >
-            <MessageSquare size={18} />
+            <MessageSquare size={REPORT_CARD_CONFIG.icons.size.large} aria-hidden="true" />
             <span>{commentsCount} comentario{commentsCount !== 1 ? 's' : ''}</span>
           </Link>
         </footer>
 
-        {/* Additional Stats (optional enhancement) */}
+        {/* Estadísticas adicionales */}
         {totalVotes > 0 && (
           <div className="report-stats" title={`Total de ${totalVotes} votos`}>
-            <Heart size={14} />
+            <Heart size={REPORT_CARD_CONFIG.icons.size.small} aria-hidden="true" />
             <span>{totalVotes} interacciones</span>
           </div>
         )}
       </div>
     </article>
   )
+})
+
+// Asignar nombre para el display name de React DevTools
+ReportCard.displayName = 'ReportCard'
+
+// PropTypes para subcomponentes
+ReportImage.propTypes = {
+  report: PropTypes.shape({
+    imagen: PropTypes.string,
+    titulo: PropTypes.string.isRequired
+  }).isRequired,
+  onImageLoad: PropTypes.func.isRequired,
+  onImageError: PropTypes.func.isRequired,
+  imageLoaded: PropTypes.bool.isRequired,
+  imageError: PropTypes.bool.isRequired
 }
 
+StatusBadge.propTypes = {
+  status: PropTypes.string.isRequired
+}
+
+PriorityIndicator.propTypes = {
+  priority: PropTypes.string.isRequired
+}
+
+// PropTypes para el componente principal
 ReportCard.propTypes = {
   report: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,

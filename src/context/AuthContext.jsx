@@ -1,4 +1,5 @@
 import { createContext, useState, useCallback, useEffect } from 'react'
+import PropTypes from 'prop-types'
 import { authAPI } from '../services/authAPI'
 
 export const AuthContext = createContext()
@@ -12,7 +13,7 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (email, password) => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const userData = await authAPI.login(email, password)
       setUser(userData)
@@ -30,7 +31,7 @@ export const AuthProvider = ({ children }) => {
   const register = useCallback(async (userData) => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const newUser = await authAPI.register(userData)
       setUser(newUser)
@@ -53,7 +54,7 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = useCallback(() => {
     setIsLoading(true)
-    
+
     const storedUser = localStorage.getItem('user')
     if (storedUser) {
       try {
@@ -63,9 +64,10 @@ export const AuthProvider = ({ children }) => {
       } catch (err) {
         localStorage.removeItem('user')
         setError('Sesión inválida')
+        console.error('Error al verificar autenticación:', err)
       }
     }
-    
+
     setIsLoading(false)
   }, [])
 
@@ -89,4 +91,9 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   )
+}
+
+// Validación de PropTypes
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired
 }

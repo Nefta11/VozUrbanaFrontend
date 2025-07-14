@@ -1,4 +1,5 @@
 import { createContext, useState, useCallback, useEffect } from 'react'
+import PropTypes from 'prop-types'
 import { reportsAPI } from '../services/reportsAPI'
 
 export const ReportsContext = createContext()
@@ -255,4 +256,9 @@ export const ReportsProvider = ({ children }) => {
       {children}
     </ReportsContext.Provider>
   )
+}
+
+// Validación de PropTypes
+ReportsProvider.propTypes = {
+  children: PropTypes.node.isRequired
 }
