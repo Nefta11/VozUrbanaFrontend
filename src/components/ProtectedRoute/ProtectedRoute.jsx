@@ -36,18 +36,16 @@ LoadingSpinner.displayName = 'LoadingSpinner'
 // Componente principal optimizado
 const ProtectedRoute = memo(({ children }) => {
   const { isAuthenticated, isLoading } = useAuth()
-  const [showModal, setShowModal] = useState(true)
+  const [shouldNavigate, setShouldNavigate] = useState(null)
   const location = useLocation()
 
   // Manejadores optimizados para las acciones del modal
   const handleLoginAction = useCallback(() => {
-    setShowModal(false)
-    // La navegación se maneja fuera del modal por el Navigate component
+    setShouldNavigate(PROTECTED_ROUTE_CONFIG.actions.login.path)
   }, [])
 
   const handleCancelAction = useCallback(() => {
-    setShowModal(false)
-    // La navegación se maneja fuera del modal por el Navigate component
+    setShouldNavigate(PROTECTED_ROUTE_CONFIG.actions.cancel.path)
   }, [])
 
   // Mostrar spinner de carga mientras se verifica autenticación
@@ -55,32 +53,36 @@ const ProtectedRoute = memo(({ children }) => {
     return <LoadingSpinner />
   }
 
-  // Si no está autenticado, mostrar modal y redirigir
+  // Si hay una navegación pendiente, ejecutarla
+  if (shouldNavigate) {
+    return (
+      <Navigate
+        to={shouldNavigate}
+        state={{ from: location }}
+        replace
+      />
+    )
+  }
+
+  // Si no está autenticado, mostrar modal
   if (!isAuthenticated) {
     return (
-      <>
-        <AlertModal
-          isOpen={showModal}
-          type={PROTECTED_ROUTE_CONFIG.modal.type}
-          title={PROTECTED_ROUTE_CONFIG.modal.title}
-          message={PROTECTED_ROUTE_CONFIG.modal.message}
-          primaryAction={{
-            label: PROTECTED_ROUTE_CONFIG.actions.login.label,
-            onClick: handleLoginAction,
-            icon: <LogIn size={PROTECTED_ROUTE_CONFIG.modal.iconSize} aria-hidden="true" />
-          }}
-          secondaryAction={{
-            label: PROTECTED_ROUTE_CONFIG.actions.cancel.label,
-            onClick: handleCancelAction,
-            icon: <X size={PROTECTED_ROUTE_CONFIG.modal.iconSize} aria-hidden="true" />
-          }}
-        />
-        <Navigate
-          to={PROTECTED_ROUTE_CONFIG.actions.login.path}
-          state={{ from: location }}
-          replace
-        />
-      </>
+      <AlertModal
+        isOpen={true}
+        type={PROTECTED_ROUTE_CONFIG.modal.type}
+        title={PROTECTED_ROUTE_CONFIG.modal.title}
+        message={PROTECTED_ROUTE_CONFIG.modal.message}
+        primaryAction={{
+          label: PROTECTED_ROUTE_CONFIG.actions.login.label,
+          onClick: handleLoginAction,
+          icon: <LogIn size={PROTECTED_ROUTE_CONFIG.modal.iconSize} aria-hidden="true" />
+        }}
+        secondaryAction={{
+          label: PROTECTED_ROUTE_CONFIG.actions.cancel.label,
+          onClick: handleCancelAction,
+          icon: <X size={PROTECTED_ROUTE_CONFIG.modal.iconSize} aria-hidden="true" />
+        }}
+      />
     )
   }
 
