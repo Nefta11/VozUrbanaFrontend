@@ -1,57 +1,99 @@
-import { useState } from 'react'
+import { useState, memo, useCallback } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { LogIn, X } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import AlertModal from '../AlertModal/AlertModal'
 import PropTypes from 'prop-types'
 
-const ProtectedRoute = ({ children }) => {
+// Configuración externa para evitar recreación en cada render
+const PROTECTED_ROUTE_CONFIG = {
+  modal: {
+    type: 'warning',
+    title: 'Acceso Restringido',
+    message: 'Debes iniciar sesión para acceder a esta sección. Por favor, inicia sesión o regístrate para continuar.',
+    iconSize: 18
+  },
+  actions: {
+    login: {
+      label: 'Iniciar Sesión',
+      path: '/login'
+    },
+    cancel: {
+      label: 'Cancelar',
+      path: '/'
+    }
+  }
+}
+
+// Componente de carga optimizado
+const LoadingSpinner = memo(() => (
+  <div className="loading-container" role="status" aria-label="Cargando...">
+    <div className="loading" aria-hidden="true"></div>
+  </div>
+))
+LoadingSpinner.displayName = 'LoadingSpinner'
+
+// Componente principal optimizado
+const ProtectedRoute = memo(({ children }) => {
   const { isAuthenticated, isLoading } = useAuth()
   const [showModal, setShowModal] = useState(true)
   const location = useLocation()
 
+  // Manejadores optimizados para las acciones del modal
+  const handleLoginAction = useCallback(() => {
+    setShowModal(false)
+    // La navegación se maneja fuera del modal por el Navigate component
+  }, [])
+
+  const handleCancelAction = useCallback(() => {
+    setShowModal(false)
+    // La navegación se maneja fuera del modal por el Navigate component
+  }, [])
+
+  // Mostrar spinner de carga mientras se verifica autenticación
   if (isLoading) {
-    return (
-      <div className="loading-container">
-        <div className="loading"></div>
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
+  // Si no está autenticado, mostrar modal y redirigir
   if (!isAuthenticated) {
     return (
       <>
         <AlertModal
           isOpen={showModal}
-          type="warning"
-          title="Acceso Restringido"
-          message="Debes iniciar sesión para acceder a esta sección. Por favor, inicia sesión o regístrate para continuar."
+          type={PROTECTED_ROUTE_CONFIG.modal.type}
+          title={PROTECTED_ROUTE_CONFIG.modal.title}
+          message={PROTECTED_ROUTE_CONFIG.modal.message}
           primaryAction={{
-            label: 'Iniciar Sesión',
-            onClick: () => {
-              setShowModal(false)
-              return <Navigate to="/login\" state={{ from: location }} replace />
-            },
-            icon: <LogIn size={18} />
+            label: PROTECTED_ROUTE_CONFIG.actions.login.label,
+            onClick: handleLoginAction,
+            icon: <LogIn size={PROTECTED_ROUTE_CONFIG.modal.iconSize} aria-hidden="true" />
           }}
           secondaryAction={{
-            label: 'Cancelar',
-            onClick: () => {
-              setShowModal(false)
-              return <Navigate to="/\" replace />
-            },
-            icon: <X size={18} />
+            label: PROTECTED_ROUTE_CONFIG.actions.cancel.label,
+            onClick: handleCancelAction,
+            icon: <X size={PROTECTED_ROUTE_CONFIG.modal.iconSize} aria-hidden="true" />
           }}
         />
-        <Navigate to="/login" state={{ from: location }} replace />
+        <Navigate
+          to={PROTECTED_ROUTE_CONFIG.actions.login.path}
+          state={{ from: location }}
+          replace
+        />
       </>
     )
   }
 
+  // Si está autenticado, renderizar children
   return children
-}
+})
+
+// Asignar nombre para el display name de React DevTools
+ProtectedRoute.displayName = 'ProtectedRoute'
+
+// PropTypes para validación
 ProtectedRoute.propTypes = {
-  children: PropTypes.node
+  children: PropTypes.node.isRequired
 }
 
 export default ProtectedRoute
