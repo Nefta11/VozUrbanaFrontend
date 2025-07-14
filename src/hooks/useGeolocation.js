@@ -2,14 +2,15 @@ import { useState, useEffect } from 'react'
 
 export const useGeolocation = () => {
   const [location, setLocation] = useState({
-    latitude: 20.2745,  // Default to Xicotepec
+    latitude: 20.2745,  // Default en Xicotepec
     longitude: -97.9557
   })
   const [error, setError] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    let isMounted = true
+  const getCurrentLocation = () => {
+    setIsLoading(true)
+    setError(null)
 
     if (!navigator.geolocation) {
       setError('La geolocalización no está soportada por su navegador')
@@ -19,38 +20,51 @@ export const useGeolocation = () => {
     
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        if (isMounted) {
-          setLocation({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          })
-          setIsLoading(false)
-        }
+        setLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        })
+        setIsLoading(false)
+        setError(null)
       },
       (error) => {
-        if (!isMounted) return
-
         let errorMessage = 'No se pudo obtener su ubicación'
         
-        if (error.code === 1) { // GeolocationPositionError.PERMISSION_DENIED
-          errorMessage = 'Acceso a la ubicación denegado. Para una mejor experiencia, por favor habilite los permisos de ubicación en la configuración de su navegador.'
-        } else if (error.code === 2) { // GeolocationPositionError.POSITION_UNAVAILABLE
-          errorMessage = 'No se pudo determinar su ubicación. Por favor, inténtelo de nuevo.'
-        } else if (error.code === 3) { // GeolocationPositionError.TIMEOUT
-          errorMessage = 'Se agotó el tiempo para obtener su ubicación. Por favor, inténtelo de nuevo.'
+        switch (error.code) {
+          case 1: // PERMISSION_DENIED
+            errorMessage = 'Acceso a la ubicación denegado. Se usará la ubicación por defecto.'
+            break
+          case 2: // POSITION_UNAVAILABLE
+            errorMessage = 'Ubicación no disponible. Se usará la ubicación por defecto.'
+            break
+          case 3: // TIMEOUT
+            errorMessage = 'Tiempo agotado para obtener ubicación. Se usará la ubicación por defecto.'
+            break
+          default:
+            errorMessage = 'Error desconocido. Se usará la ubicación por defecto.'
         }
         
+        console.warn('Geolocation error:', error)
         setError(errorMessage)
-        console.warn('Error getting location:', errorMessage)
         setIsLoading(false)
+        // No cambiar la ubicación por defecto en caso de error
       },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      { 
+        enableHighAccuracy: false, // Cambio a false para mejor compatibilidad
+        timeout: 10000, // Aumentar timeout
+        maximumAge: 300000 // 5 minutos de cache
+      }
     )
+  }
 
-    return () => {
-      isMounted = false
-    }
+  useEffect(() => {
+    getCurrentLocation()
   }, [])
 
-  return { location, error, isLoading }
+  return { 
+    location, 
+    error, 
+    isLoading,
+    retry: getCurrentLocation 
+  }
 }

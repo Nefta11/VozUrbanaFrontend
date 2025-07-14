@@ -72,17 +72,67 @@ const MapView = ({ height = '500px', zoom = 12, showPopups = true }) => {
   if (mapError) {
     return (
       <div className="map-error">
-        {/* Error al cargar el mapa */}
+        <AlertCircle size={24} />
         <p>Error al cargar el mapa: {mapError}</p>
+        <button onClick={() => window.location.reload()} className="retry-button">
+          Reintentar
+        </button>
       </div>
     )
   }
 
   if (locationError) {
     return (
-      <div className="map-error">
-        {/* Error al obtener la ubicación */}
-        <p>{locationError}</p>
+      <div className="map-container" style={{ height }}>
+        {/* Mostrar mensaje de ubicación pero seguir mostrando el mapa */}
+        <div className="location-warning">
+          <p>{locationError}</p>
+        </div>
+        <MapContainer
+          center={mapCenter}
+          zoom={zoom}
+          style={{ height: '100%' }}
+          whenReady={() => setMapError(null)}
+          whenError={(error) => setMapError(error.message)}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          {/* Marcadores de los reportes */}
+          {reports.map(report => {
+            const statusInfo = getStatusInfo(report.estado)
+            const StatusIcon = statusInfo.icon
+
+            return (
+              <Marker
+                key={report.id}
+                position={[report.latitud, report.longitud]}
+                icon={getCategoryIcon(report.categoria)}
+              >
+                {showPopups && (
+                  <Popup className="map-popup">
+                    <div className="map-popup-content">
+                      <h3>{report.titulo}</h3>
+                      <CategoryBadge category={report.categoria} />
+                      <p>{report.descripcion.substring(0, 100)}...</p>
+                      <div className="map-popup-footer">
+                        <span className={`status-badge status-${report.estado}`}>
+                          <StatusIcon size={14} />
+                          {statusInfo.text}
+                        </span>
+                        <Link to={`/reports/${report.id}`} className="map-popup-link">
+                          Ver detalles
+                          <ChevronRight size={16} />
+                        </Link>
+                      </div>
+                    </div>
+                  </Popup>
+                )}
+              </Marker>
+            )
+          })}
+        </MapContainer>
       </div>
     )
   }
