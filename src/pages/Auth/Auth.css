@@ -22,7 +22,7 @@
 
 .auth-right {
   flex: 1;
-  background: linear-gradient(135deg, #2563eb 0%, #059669 100%);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9) 0%, rgba(16, 185, 129, 0.9) 100%);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -40,8 +40,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('../../assets/logoVozUrbana.png') center/contain no-repeat;
-  opacity: 0.1;
+  background: url('https://images.unsplash.com/photo-1461088945293-0c17689e48ac?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') center/cover no-repeat;
+  opacity: 0.3;
   z-index: 1;
 }
 
@@ -152,6 +152,7 @@
   font-size: 0.75rem;
   margin-top: 0.25rem;
 }
+
 .auth-button {
   width: 100%;
   padding: 1rem;
@@ -186,9 +187,9 @@
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
-  background-color: transparent;
-  color: #6b7280;
-  border: 2px solid #e5e7eb;
+  background-color: #10b981;
+  color: white;
+  border: 2px solid #10b981;
   border-radius: 8px;
   font-weight: 600;
   font-size: 1rem;
@@ -199,9 +200,9 @@
 }
 
 .auth-button-secondary:hover {
-  background-color: #f9fafb;
-  border-color: #d1d5db;
-  color: #374151;
+  background-color: #059669;
+  border-color: #059669;
+  color: white;
 }
 
 .auth-footer {
@@ -228,6 +229,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -238,23 +240,23 @@
   .auth-container {
     flex-direction: column;
   }
-  
+
   .auth-left {
     order: 1;
     padding: 2rem 1.5rem;
   }
-  
+
   .auth-right {
     order: 0;
     min-height: 200px;
     flex: none;
     padding: 2rem 1.5rem;
   }
-  
+
   .auth-form-container {
     max-width: none;
   }
-  
+
   .auth-header h1 {
     font-size: 1.75rem;
   }
