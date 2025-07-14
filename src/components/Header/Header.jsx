@@ -85,7 +85,7 @@ const Header = () => {
         <div className="logo">
           <Link to="/" onClick={closeMenu}>
             <div className="logo-content">
-              <span className="logo-icon">🏙️</span>
+              <img src="/src/assets/logoVozUrbana.png" alt="Voz Urbana" className="logo-icon" />
               <h1>Voz Urbana</h1>
             </div>
           </Link>

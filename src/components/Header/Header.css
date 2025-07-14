@@ -56,7 +56,8 @@
 }
 
 .logo-icon {
-  font-size: 2rem;
+  width: 4.5rem;
+  height: 4.5rem;
   filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.3));
   animation: pulse 2s infinite;
 }
@@ -64,12 +65,10 @@
 .logo h1 {
   font-size: 1.75rem;
   margin: 0;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: white;
   font-weight: 800;
   letter-spacing: -0.025em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .nav {
