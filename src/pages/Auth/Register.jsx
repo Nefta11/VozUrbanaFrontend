@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { User, Mail, Lock, UserPlus, Loader, AlertCircle } from 'lucide-react'
+import { UserPlus, Loader, AlertCircle } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useNotification } from '../../hooks/useNotification'
 import AlertModal from '../../components/AlertModal/AlertModal'
@@ -95,128 +95,131 @@ const Register = () => {
   return (
     <div className="auth-page">
       <div className="auth-container">
-        <div className="auth-header">
-          <h1>Crear Cuenta</h1>
-          <p>Únete a Voz Urbana y ayuda a mejorar tu comunidad</p>
+        <div className="auth-left">
+          <div className="auth-form-container">
+            <div className="auth-header">
+              <h1>Crear Cuenta</h1>
+              <p>Únete a Voz Urbana y ayuda a mejorar tu comunidad</p>
+            </div>
+
+            {errors.general && (
+              <div className="auth-error">
+                <AlertCircle size={18} />
+                {errors.general}
+              </div>
+            )}
+
+            <form className="auth-form" onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label htmlFor="nombre">Nombre Completo</label>
+                <input
+                  type="text"
+                  id="nombre"
+                  value={formData.nombre}
+                  onChange={(e) => updateFormData('nombre', e.target.value)}
+                  placeholder="Tu nombre completo"
+                  className={errors.nombre ? 'input-error' : ''}
+                  autoComplete="name"
+                />
+                {errors.nombre && (
+                  <span className="error-message">
+                    <AlertCircle size={14} />
+                    {errors.nombre}
+                  </span>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="email">Correo Electrónico</label>
+                <input
+                  type="email"
+                  id="email"
+                  value={formData.email}
+                  onChange={(e) => updateFormData('email', e.target.value)}
+                  placeholder="tu@email.com"
+                  className={errors.email ? 'input-error' : ''}
+                  autoComplete="email"
+                />
+                {errors.email && (
+                  <span className="error-message">
+                    <AlertCircle size={14} />
+                    {errors.email}
+                  </span>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="password">Contraseña</label>
+                <input
+                  type="password"
+                  id="password"
+                  value={formData.password}
+                  onChange={(e) => updateFormData('password', e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  className={errors.password ? 'input-error' : ''}
+                  autoComplete="new-password"
+                />
+                {errors.password && (
+                  <span className="error-message">
+                    <AlertCircle size={14} />
+                    {errors.password}
+                  </span>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="confirmPassword">Confirmar Contraseña</label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={(e) => updateFormData('confirmPassword', e.target.value)}
+                  placeholder="Repite tu contraseña"
+                  className={errors.confirmPassword ? 'input-error' : ''}
+                  autoComplete="new-password"
+                />
+                {errors.confirmPassword && (
+                  <span className="error-message">
+                    <AlertCircle size={14} />
+                    {errors.confirmPassword}
+                  </span>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className="auth-button"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader size={20} className="spinner" />
+                    Creando cuenta...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus size={20} />
+                    Crear Cuenta
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="auth-footer">
+              <p>¿Ya tienes una cuenta? <Link to="/login">Inicia sesión</Link></p>
+            </div>
+          </div>
         </div>
 
-        {errors.general && (
-          <div className="auth-error">
-            <AlertCircle size={18} />
-            {errors.general}
+        <div className="auth-right">
+          <div className="auth-right-content">
+            <div className="auth-brand">
+              <img src="/src/assets/logoVozUrbana.png" alt="Voz Urbana" />
+              <h2>VOZ URBANA</h2>
+            </div>
+            <h3>CONECTA. REPORTA. TRANSFORMA.</h3>
+            <p>Tu voz cuenta para hacer de tu ciudad un lugar mejor para todos.</p>
           </div>
-        )}
-
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="nombre">
-              <User size={18} />
-              Nombre Completo
-            </label>
-            <input
-              type="text"
-              id="nombre"
-              value={formData.nombre}
-              onChange={(e) => updateFormData('nombre', e.target.value)}
-              placeholder="Tu nombre completo"
-              className={errors.nombre ? 'input-error' : ''}
-              autoComplete="name"
-            />
-            {errors.nombre && (
-              <span className="error-message">
-                <AlertCircle size={14} />
-                {errors.nombre}
-              </span>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="email">
-              <Mail size={18} />
-              Correo Electrónico
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={formData.email}
-              onChange={(e) => updateFormData('email', e.target.value)}
-              placeholder="tu@email.com"
-              className={errors.email ? 'input-error' : ''}
-              autoComplete="email"
-            />
-            {errors.email && (
-              <span className="error-message">
-                <AlertCircle size={14} />
-                {errors.email}
-              </span>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="password">
-              <Lock size={18} />
-              Contraseña
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={formData.password}
-              onChange={(e) => updateFormData('password', e.target.value)}
-              placeholder="Mínimo 6 caracteres"
-              className={errors.password ? 'input-error' : ''}
-              autoComplete="new-password"
-            />
-            {errors.password && (
-              <span className="error-message">
-                <AlertCircle size={14} />
-                {errors.password}
-              </span>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="confirmPassword">
-              <Lock size={18} />
-              Confirmar Contraseña
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={(e) => updateFormData('confirmPassword', e.target.value)}
-              placeholder="Repite tu contraseña"
-              className={errors.confirmPassword ? 'input-error' : ''}
-              autoComplete="new-password"
-            />
-            {errors.confirmPassword && (
-              <span className="error-message">
-                <AlertCircle size={14} />
-                {errors.confirmPassword}
-              </span>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            className="auth-button"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader size={20} className="spinner" />
-                Creando cuenta...
-              </>
-            ) : (
-              <>
-                <UserPlus size={20} />
-                Crear Cuenta
-              </>
-            )}
-          </button>
-        </form>
-
-        <div className="auth-footer">
-          <p>¿Ya tienes una cuenta? <Link to="/login">Inicia sesión</Link></p>
         </div>
       </div>
 

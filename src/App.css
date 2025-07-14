@@ -10,6 +10,11 @@
   padding-bottom: 2rem;
 }
 
+.main-content-auth {
+  flex: 1;
+  /* Sin margin-top para pantalla completa en rutas de auth */
+}
+
 /* Global map styles */
 .leaflet-container {
   width: 100%;
