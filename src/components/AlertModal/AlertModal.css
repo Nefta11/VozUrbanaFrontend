@@ -10,17 +10,21 @@
   align-items: center;
   z-index: 1000;
   animation: fadeIn 0.3s ease;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
 }
 
 .alert-modal {
   background: white;
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   max-width: 90%;
   width: 400px;
   position: relative;
   animation: slideIn 0.3s ease;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .alert-modal-icon {
@@ -82,17 +86,29 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  border: none;
+  font-size: 0.9rem;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.alert-modal-button:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.alert-modal-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .alert-modal-button.primary {
   background-color: var(--primary-color);
   color: white;
-  border: none;
 }
 
 .alert-modal-button.primary:hover {
   background-color: #1d4ed8;
-  transform: translateY(-1px);
 }
 
 .alert-modal-button.secondary {
@@ -103,13 +119,14 @@
 
 .alert-modal-button.secondary:hover {
   background-color: #f1f5f9;
-  transform: translateY(-1px);
+  border-color: #cbd5e1;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -120,8 +137,61 @@
     transform: translateY(-20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+/* Diseño Responsivo */
+@media (max-width: 480px) {
+  .alert-modal {
+    width: 95%;
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+
+  .alert-modal-icon {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 1rem;
+  }
+
+  .alert-modal h2 {
+    font-size: 1.25rem;
+  }
+
+  .alert-modal p {
+    font-size: 0.9rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .alert-modal-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .alert-modal-button {
+    width: 100%;
+    padding: 0.875rem 1rem;
+  }
+}
+
+@media (max-height: 600px) {
+  .alert-modal {
+    padding: 1.5rem;
+  }
+
+  .alert-modal-icon {
+    margin-bottom: 1rem;
+  }
+
+  .alert-modal h2 {
+    margin-bottom: 0.75rem;
+  }
+
+  .alert-modal p {
+    margin-bottom: 1.25rem;
   }
 }

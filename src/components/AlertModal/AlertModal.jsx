@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { AlertCircle, Info, AlertTriangle, CheckCircle } from 'lucide-react'
 import PropTypes from 'prop-types'
@@ -13,46 +13,72 @@ const AlertModal = ({
   primaryAction,
   secondaryAction
 }) => {
+  // Manejo de la tecla ESC
+  const handleEscKey = useCallback((event) => {
+    if (event.key === 'Escape' && isOpen) {
+      onClose()
+    }
+  }, [isOpen, onClose])
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
+      document.addEventListener('keydown', handleEscKey)
     } else {
       document.body.style.overflow = 'unset'
     }
 
     return () => {
       document.body.style.overflow = 'unset'
+      document.removeEventListener('keydown', handleEscKey)
     }
-  }, [isOpen])
+  }, [isOpen, handleEscKey])
 
   if (!isOpen) return null
 
-  const getIcon = () => {
-    switch (type) {
-      case 'warning':
-        return <AlertTriangle size={32} />
-      case 'error':
-        return <AlertCircle size={32} />
-      case 'success':
-        return <CheckCircle size={32} />
-      default:
-        return <Info size={32} />
-    }
+  // Objeto de configuración de iconos 
+  const iconConfig = {
+    warning: AlertTriangle,
+    error: AlertCircle,
+    success: CheckCircle,
+    info: Info
   }
 
+  const IconComponent = iconConfig[type] || iconConfig.info
+
   const modalContent = (
-    <div className="alert-modal-overlay" onClick={onClose}>
-      <div className="alert-modal" onClick={e => e.stopPropagation()}>
-        <div className={`alert-modal-icon ${type}`}>
-          {getIcon()}
+    <div
+      className="alert-modal-overlay"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="alert-modal-title"
+      aria-describedby="alert-modal-description"
+    >
+      <div
+        className="alert-modal"
+        onClick={e => e.stopPropagation()}
+        role="document"
+      >
+        <div className={`alert-modal-icon ${type}`} aria-hidden="true">
+          <IconComponent size={32} />
         </div>
-        <h2>{title}</h2>
-        <p>{message}</p>
+
+        {title && (
+          <h2 id="alert-modal-title">{title}</h2>
+        )}
+
+        {message && (
+          <p id="alert-modal-description">{message}</p>
+        )}
+
         <div className="alert-modal-actions">
           {primaryAction && (
             <button
               className="alert-modal-button primary"
               onClick={primaryAction.onClick}
+              autoFocus
+              type="button"
             >
               {primaryAction.icon}
               {primaryAction.label}
@@ -62,6 +88,7 @@ const AlertModal = ({
             <button
               className="alert-modal-button secondary"
               onClick={secondaryAction.onClick}
+              type="button"
             >
               {secondaryAction.icon}
               {secondaryAction.label}
@@ -72,10 +99,7 @@ const AlertModal = ({
     </div>
   )
 
-  return createPortal(
-    modalContent,
-    document.body
-  )
+  return createPortal(modalContent, document.body)
 }
 AlertModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
@@ -93,6 +117,14 @@ AlertModal.propTypes = {
     label: PropTypes.string.isRequired,
     icon: PropTypes.node
   })
+}
+
+AlertModal.defaultProps = {
+  type: 'info',
+  title: null,
+  message: null,
+  primaryAction: null,
+  secondaryAction: null
 }
 
 export default AlertModal
