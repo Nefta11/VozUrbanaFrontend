@@ -270,12 +270,14 @@
   padding-top: 1.5rem;
   border-top: 1px solid rgba(226, 232, 240, 0.6);
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .report-votes {
   display: flex;
   gap: 0.75rem;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .vote-button {
@@ -353,6 +355,9 @@
   border: 1px solid rgba(226, 232, 240, 0.6);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  flex-shrink: 0;
+  min-width: max-content;
+  white-space: nowrap;
 }
 
 .report-comments:hover {
@@ -421,6 +426,21 @@
     padding: 0.5rem 1rem;
     font-size: 0.75rem;
   }
+
+  .report-comments {
+    font-size: 0.8rem;
+    padding: 0.65rem 0.85rem;
+  }
+
+  .report-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .report-votes {
+    justify-content: center;
+  }
 }
 
 @media (max-width: 480px) {
@@ -444,6 +464,14 @@
   .report-comments {
     flex: 1;
     justify-content: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .report-comments {
+    max-width: 100%;
+    min-width: 120px;
   }
 
   .report-content {
