@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, memo, useCallback, useMemo } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import { Link } from 'react-router-dom'
 import L from 'leaflet'
@@ -9,211 +9,275 @@ import CategoryBadge from '../CategoryBadge/CategoryBadge'
 import './MapView.css'
 import PropTypes from 'prop-types'
 
-const MapView = ({ height = '500px', zoom = 12, showPopups = true }) => {
+// Configuración externa para evitar recreación en cada render
+const MAP_VIEW_CONFIG = {
+  defaultCenter: [20.2745, -97.9557], // Xicotepec por defecto
+  defaultZoom: 12,
+  locationErrorTimeout: 5000, // 5 segundos
+  regionBounds: {
+    latMin: 20.1,
+    latMax: 20.4,
+    lngMin: -98.1,
+    lngMax: -97.9
+  },
+  marker: {
+    iconSize: [40, 56],
+    iconAnchor: [20, 56],
+    popupAnchor: [0, -48],
+    className: 'custom-marker'
+  },
+  tileLayer: {
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  },
+  popup: {
+    className: 'map-popup',
+    descriptionLength: 100
+  }
+}
+
+// Configuración de estados de reportes
+const STATUS_CONFIG = {
+  nuevo: {
+    text: 'Nuevo',
+    icon: AlertCircle,
+    className: 'status-nuevo'
+  },
+  en_proceso: {
+    text: 'En Proceso',
+    icon: Clock,
+    className: 'status-en_proceso'
+  },
+  resuelto: {
+    text: 'Resuelto',
+    icon: CheckCircle,
+    className: 'status-resuelto'
+  },
+  cerrado: {
+    text: 'Cerrado',
+    icon: CheckCircle,
+    className: 'status-cerrado'
+  }
+}
+
+// Función utilitaria para verificar si una ubicación está en la región
+const isLocationInRegion = (location) => {
+  const { regionBounds } = MAP_VIEW_CONFIG
+  return location &&
+    location.latitude >= regionBounds.latMin &&
+    location.latitude <= regionBounds.latMax &&
+    location.longitude >= regionBounds.lngMin &&
+    location.longitude <= regionBounds.lngMax
+}
+
+// Función utilitaria para obtener información del estado del reporte
+const getStatusInfo = (status) => {
+  return STATUS_CONFIG[status] || STATUS_CONFIG.nuevo
+}
+
+// Función utilitaria para crear iconos de marcadores por categoría
+const createCategoryIcon = (category) => {
+  return L.divIcon({
+    className: MAP_VIEW_CONFIG.marker.className,
+    html: `
+      <div class="marker-icon">
+        <div class="marker-pin marker-${category}"></div>
+      </div>
+    `,
+    iconSize: MAP_VIEW_CONFIG.marker.iconSize,
+    iconAnchor: MAP_VIEW_CONFIG.marker.iconAnchor,
+    popupAnchor: MAP_VIEW_CONFIG.marker.popupAnchor
+  })
+}
+
+// Componente de advertencia de ubicación
+const LocationWarning = memo(({ show, message }) => {
+  if (!show || !message) return null
+
+  return (
+    <div className="location-warning" role="alert" aria-live="polite">
+      <p>{message}</p>
+    </div>
+  )
+})
+LocationWarning.displayName = 'LocationWarning'
+
+// Componente de error del mapa
+const MapError = memo(({ error, onRetry }) => (
+  <div className="map-error" role="alert">
+    <AlertCircle size={24} aria-hidden="true" />
+    <p>Error al cargar el mapa: {error}</p>
+    <button onClick={onRetry} className="retry-button">
+      Reintentar
+    </button>
+  </div>
+))
+MapError.displayName = 'MapError'
+// Componente de popup del reporte optimizado
+const ReportPopup = memo(({ report, showPopups }) => {
+  if (!showPopups) return null
+
+  const statusInfo = getStatusInfo(report.estado)
+  const StatusIcon = statusInfo.icon
+  const truncatedDescription = report.descripcion.length > MAP_VIEW_CONFIG.popup.descriptionLength
+    ? `${report.descripcion.substring(0, MAP_VIEW_CONFIG.popup.descriptionLength)}...`
+    : report.descripcion
+
+  return (
+    <Popup className={MAP_VIEW_CONFIG.popup.className}>
+      <div className="map-popup-content">
+        {/* Título y categoría del reporte */}
+        <h3>{report.titulo}</h3>
+        <CategoryBadge category={report.categoria} />
+        {/* Descripción recortada */}
+        <p>{truncatedDescription}</p>
+        <div className="map-popup-footer">
+          {/* Estado del reporte */}
+          <span className={`status-badge ${statusInfo.className}`}>
+            <StatusIcon size={14} aria-hidden="true" />
+            {statusInfo.text}
+          </span>
+          {/* Enlace a detalles */}
+          <Link
+            to={`/reports/${report.id}`}
+            className="map-popup-link"
+            aria-label={`Ver detalles del reporte: ${report.titulo}`}
+          >
+            Ver detalles
+            <ChevronRight size={16} aria-hidden="true" />
+          </Link>
+        </div>
+      </div>
+    </Popup>
+  )
+})
+ReportPopup.displayName = 'ReportPopup'
+
+// Componente principal optimizado
+const MapView = memo(({ height = '500px', zoom = MAP_VIEW_CONFIG.defaultZoom, showPopups = true }) => {
   const { reports } = useReports()
   const { location, error: locationError } = useGeolocation()
   const [mapError, setMapError] = useState(null)
-  const [mapCenter, setMapCenter] = useState([20.2745, -97.9557]) // Default to Xicotepec
+  const [mapCenter, setMapCenter] = useState(MAP_VIEW_CONFIG.defaultCenter)
   const [showLocationError, setShowLocationError] = useState(false)
 
-  // Controla la visibilidad del mensaje de error de ubicación
+  // Manejador optimizado para reintentar carga del mapa
+  const handleRetry = useCallback(() => {
+    window.location.reload()
+  }, [])
+
+  // Manejadores optimizados para eventos del mapa
+  const handleMapReady = useCallback(() => {
+    setMapError(null)
+  }, [])
+
+  const handleMapError = useCallback((error) => {
+    setMapError(error.message)
+  }, [])
+
+  // Efecto para manejar la visibilidad del mensaje de error de ubicación
   useEffect(() => {
     if (locationError) {
       setShowLocationError(true)
       const timer = setTimeout(() => {
         setShowLocationError(false)
-      }, 5000) // 5 segundos
+      }, MAP_VIEW_CONFIG.locationErrorTimeout)
 
       return () => clearTimeout(timer)
     }
   }, [locationError])
 
-  // Establece el centro del mapa basado en la ubicación del usuario si está dentro de la región
+  // Efecto para establecer el centro del mapa basado en la ubicación del usuario
   useEffect(() => {
-    if (location && location.latitude) {
-      // Verifica si la ubicación está dentro de la región (aproximadamente)
-      const isInRegion =
-        location.latitude >= 20.1 &&
-        location.latitude <= 20.4 &&
-        location.longitude >= -98.1 &&
-        location.longitude <= -97.9
-
-      if (isInRegion) {
-        setMapCenter([location.latitude, location.longitude])
-      }
+    if (location && isLocationInRegion(location)) {
+      setMapCenter([location.latitude, location.longitude])
     }
   }, [location])
 
-  // Iconos personalizados para los marcadores según la categoría del reporte
-  const getCategoryIcon = (category) => {
-    return L.divIcon({
-      className: 'custom-marker',
-      html: `
-        <div class="marker-icon">
-          <div class="marker-pin marker-${category}"></div>
-        </div>
-      `,
-      iconSize: [40, 56],
-      iconAnchor: [20, 56],
-      popupAnchor: [0, -48]
+  // Memorizar iconos de marcadores para evitar recreación
+  const categoryIcons = useMemo(() => {
+    const icons = {}
+    const categories = ['saneamiento', 'infraestructura', 'salud_publica', 'seguridad', 'medio_ambiente', 'otros']
+    categories.forEach(category => {
+      icons[category] = createCategoryIcon(category)
     })
-  }
+    return icons
+  }, [])
 
-  // Devuelve información del estado del reporte (texto e ícono)
-  const getStatusInfo = (status) => {
-    const statusMap = {
-      nuevo: {
-        text: 'Nuevo',
-        icon: AlertCircle
-      },
-      en_proceso: {
-        text: 'En Proceso',
-        icon: Clock
-      },
-      resuelto: {
-        text: 'Resuelto',
-        icon: CheckCircle
-      },
-      cerrado: {
-        text: 'Cerrado',
-        icon: CheckCircle
-      }
-    }
-    return statusMap[status] || statusMap.nuevo
-  }
+  // Función optimizada para obtener icono por categoría
+  const getCategoryIcon = useCallback((category) => {
+    return categoryIcons[category] || categoryIcons.otros
+  }, [categoryIcons])
 
+  // Renderizado condicional para errores
   if (mapError) {
-    return (
-      <div className="map-error">
-        <AlertCircle size={24} />
-        <p>Error al cargar el mapa: {mapError}</p>
-        <button onClick={() => window.location.reload()} className="retry-button">
-          Reintentar
-        </button>
-      </div>
-    )
-  }
-
-  if (locationError) {
-    return (
-      <div className="map-container" style={{ height }}>
-        {/* Mostrar mensaje de ubicación temporalmente */}
-        {showLocationError && (
-          <div className="location-warning">
-            <p>{locationError}</p>
-          </div>
-        )}
-        <MapContainer
-          center={mapCenter}
-          zoom={zoom}
-          style={{ height: '100%' }}
-          whenReady={() => setMapError(null)}
-          whenError={(error) => setMapError(error.message)}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          {/* Marcadores de los reportes */}
-          {reports.map(report => {
-            const statusInfo = getStatusInfo(report.estado)
-            const StatusIcon = statusInfo.icon
-
-            return (
-              <Marker
-                key={report.id}
-                position={[report.latitud, report.longitud]}
-                icon={getCategoryIcon(report.categoria)}
-              >
-                {showPopups && (
-                  <Popup className="map-popup">
-                    <div className="map-popup-content">
-                      <h3>{report.titulo}</h3>
-                      <CategoryBadge category={report.categoria} />
-                      <p>{report.descripcion.substring(0, 100)}...</p>
-                      <div className="map-popup-footer">
-                        <span className={`status-badge status-${report.estado}`}>
-                          <StatusIcon size={14} />
-                          {statusInfo.text}
-                        </span>
-                        <Link to={`/reports/${report.id}`} className="map-popup-link">
-                          Ver detalles
-                          <ChevronRight size={16} />
-                        </Link>
-                      </div>
-                    </div>
-                  </Popup>
-                )}
-              </Marker>
-            )
-          })}
-        </MapContainer>
-      </div>
-    )
+    return <MapError error={mapError} onRetry={handleRetry} />
   }
 
   return (
-    <div className="map-container" style={{ height }}>
-      {/* Mostrar mensaje de ubicación temporalmente si hay error */}
-      {showLocationError && locationError && (
-        <div className="location-warning">
-          <p>{locationError}</p>
-        </div>
-      )}
+    <div
+      className="map-container"
+      style={{ height }}
+      role="application"
+      aria-label="Mapa de reportes ciudadanos"
+    >
+      {/* Advertencia de ubicación */}
+      <LocationWarning show={showLocationError} message={locationError} />
+
       <MapContainer
         center={mapCenter}
         zoom={zoom}
         style={{ height: '100%' }}
-        whenReady={() => setMapError(null)}
-        whenError={(error) => setMapError(error.message)}
+        whenReady={handleMapReady}
+        whenError={handleMapError}
+        aria-label="Mapa interactivo con reportes de la ciudad"
       >
         {/* Capa de mosaico de OpenStreetMap */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution={MAP_VIEW_CONFIG.tileLayer.attribution}
+          url={MAP_VIEW_CONFIG.tileLayer.url}
         />
 
         {/* Marcadores de los reportes */}
-        {reports.map(report => {
-          const statusInfo = getStatusInfo(report.estado)
-          const StatusIcon = statusInfo.icon
-
-          return (
-            <Marker
-              key={report.id}
-              position={[report.latitud, report.longitud]}
-              icon={getCategoryIcon(report.categoria)}
-            >
-              {showPopups && (
-                <Popup className="map-popup">
-                  <div className="map-popup-content">
-                    {/* Título y categoría del reporte */}
-                    <h3>{report.titulo}</h3>
-                    <CategoryBadge category={report.categoria} />
-                    {/* Descripción recortada */}
-                    <p>{report.descripcion.substring(0, 100)}...</p>
-                    <div className="map-popup-footer">
-                      {/* Estado del reporte */}
-                      <span className={`status-badge status-${report.estado}`}>
-                        <StatusIcon size={14} />
-                        {statusInfo.text}
-                      </span>
-                      {/* Enlace a detalles */}
-                      <Link to={`/reports/${report.id}`} className="map-popup-link">
-                        Ver detalles
-                        <ChevronRight size={16} />
-                      </Link>
-                    </div>
-                  </div>
-                </Popup>
-              )}
-            </Marker>
-          )
-        })}
+        {reports.map(report => (
+          <Marker
+            key={report.id}
+            position={[report.latitud, report.longitud]}
+            icon={getCategoryIcon(report.categoria)}
+          >
+            <ReportPopup report={report} showPopups={showPopups} />
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   )
+})
+
+// Asignar nombre para el display name de React DevTools
+MapView.displayName = 'MapView'
+// PropTypes para los subcomponentes
+LocationWarning.propTypes = {
+  show: PropTypes.bool.isRequired,
+  message: PropTypes.string
 }
+
+MapError.propTypes = {
+  error: PropTypes.string.isRequired,
+  onRetry: PropTypes.func.isRequired
+}
+
+ReportPopup.propTypes = {
+  report: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    titulo: PropTypes.string.isRequired,
+    categoria: PropTypes.string.isRequired,
+    descripcion: PropTypes.string.isRequired,
+    estado: PropTypes.string.isRequired
+  }).isRequired,
+  showPopups: PropTypes.bool.isRequired
+}
+
+// PropTypes para el componente principal
 MapView.propTypes = {
   height: PropTypes.string,
   zoom: PropTypes.number,
