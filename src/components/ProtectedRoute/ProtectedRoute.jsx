@@ -72,6 +72,7 @@ const ProtectedRoute = memo(({ children }) => {
         type={PROTECTED_ROUTE_CONFIG.modal.type}
         title={PROTECTED_ROUTE_CONFIG.modal.title}
         message={PROTECTED_ROUTE_CONFIG.modal.message}
+        onClose={handleCancelAction}
         primaryAction={{
           label: PROTECTED_ROUTE_CONFIG.actions.login.label,
           onClick: handleLoginAction,

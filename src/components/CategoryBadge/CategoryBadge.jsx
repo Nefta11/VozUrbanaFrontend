@@ -59,7 +59,7 @@ const CategoryBadge = memo(({ category }) => {
     <span
       className={`category-badge category-badge--${categoryInfo.className}`}
       title={`Categoría: ${categoryInfo.name}`}
-      role="badge"
+      role="status"
       aria-label={`Categoría ${categoryInfo.name}`}
     >
       <Icon size={16} aria-hidden="true" />
