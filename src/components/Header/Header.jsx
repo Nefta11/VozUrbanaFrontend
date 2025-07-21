@@ -18,42 +18,23 @@ import AlertModal from '../AlertModal/AlertModal'
 import PropTypes from 'prop-types'
 import './Header.css'
 
-// Configuración de navegación - movida fuera del componente
-const NAVIGATION_CONFIG = {
-  main: [
-    {
-      to: '/',
-      label: 'Inicio',
-      icon: Home
-    },
-    {
-      to: '/reports',
-      label: 'Reportes',
-      icon: FileText
-    },
-    {
-      to: '/create-report',
-      label: 'Crear Reporte',
-      icon: PlusCircle
-    }
-  ],
-  auth: [
-    {
-      to: '/login',
-      label: 'Iniciar Sesión',
-      icon: LogIn,
-      type: 'login'
-    },
-    {
-      to: '/register',
-      label: 'Registrarse',
-      icon: UserPlus,
-      type: 'register'
-    }
-  ]
-}
+// Configuración de navegación de autenticación
+const AUTH_CONFIG = [
+  {
+    to: '/login',
+    label: 'Iniciar Sesión',
+    icon: LogIn,
+    type: 'login'
+  },
+  {
+    to: '/register',
+    label: 'Registrarse',
+    icon: UserPlus,
+    type: 'register'
+  }
+]
 
-// Componente para renderizar elementos de navegación - elimina repetición
+// Componente para renderizar elementos de navegación
 const NavItem = memo(({ item, onClick, className = '' }) => (
   <li className="nav-item">
     <NavLink
@@ -74,7 +55,7 @@ NavItem.displayName = 'NavItem'
 const AuthButtons = memo(({ onClose }) => (
   <li className="nav-item">
     <div className="auth-buttons">
-      {NAVIGATION_CONFIG.auth.map((item) => (
+      {AUTH_CONFIG.map((item) => (
         <NavLink
           key={item.to}
           to={item.to}
@@ -142,9 +123,8 @@ const Header = memo(() => {
       icon: FileText
     })
 
-    // Solo mostrar "Crear Reporte" para usuarios autenticados que NO son administradores
-    // O para usuarios no autenticados (modo invitado)
-    if (!isAuthenticated || (isAuthenticated && !isAdmin)) {
+    // Solo mostrar "Crear Reporte" para usuarios que NO son administradores
+    if (!isAdmin) {
       mainItems.push({
         to: '/create-report',
         label: 'Crear Reporte',
@@ -153,7 +133,7 @@ const Header = memo(() => {
     }
 
     return mainItems
-  }, [isAuthenticated, isAdmin])
+  }, [isAdmin])
 
   // Configuración de elementos de navegación autenticados
   const getAuthenticatedNavItems = useCallback(() => {

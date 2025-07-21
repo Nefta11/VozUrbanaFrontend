@@ -40,7 +40,7 @@ function App() {
             path="/create-report"
             element={
               <ProtectedRoute>
-                <CreateReport />
+                {isAdmin ? <Navigate to="/admin" /> : <CreateReport />}
               </ProtectedRoute>
             }
           />
