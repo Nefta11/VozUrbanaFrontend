@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { 
-  AlertCircle, 
-  Clock, 
-  CheckCircle, 
-  Users, 
-  FileText, 
+import {
+  AlertCircle,
+  Clock,
+  CheckCircle,
+  Users,
+  FileText,
   AlertTriangle,
   Loader,
   XCircle
@@ -21,19 +21,19 @@ const AdminDashboard = () => {
   const { reports, updateStatus } = useReports()
   const { showNotification } = useNotification()
   const navigate = useNavigate()
-  
+
   const [activeTab, setActiveTab] = useState('nuevo')
   const [filteredReports, setFilteredReports] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [updatingReportId, setUpdatingReportId] = useState(null)
-  
+
   useEffect(() => {
     if (!isAdmin) {
       showNotification('Acceso denegado. Solo administradores.', 'error')
       navigate('/')
     }
   }, [isAdmin, navigate, showNotification])
-  
+
   useEffect(() => {
     if (reports.length > 0) {
       setIsLoading(true)
@@ -42,7 +42,7 @@ const AdminDashboard = () => {
       setIsLoading(false)
     }
   }, [activeTab, reports])
-  
+
   const getStats = () => {
     return {
       total: reports.length,
@@ -52,21 +52,25 @@ const AdminDashboard = () => {
       cerrados: reports.filter(r => r.estado === 'cerrado').length
     }
   }
-  
+
   const stats = getStats()
-  
+
   const handleStatusChange = async (reportId, newStatus) => {
     setUpdatingReportId(reportId)
     try {
       await updateStatus(reportId, newStatus)
       showNotification('Estado actualizado correctamente', 'success')
     } catch (error) {
-      showNotification('Error al actualizar el estado', 'error')
+      console.error('Error al actualizar estado:', error)
+      showNotification(
+        error?.message || 'Error al actualizar el estado',
+        'error'
+      )
     } finally {
       setUpdatingReportId(null)
     }
   }
-  
+
   const getNextStatus = (currentStatus) => {
     const statusFlow = {
       nuevo: 'en_proceso',
@@ -75,7 +79,7 @@ const AdminDashboard = () => {
     }
     return statusFlow[currentStatus] || currentStatus
   }
-  
+
   return (
     <div className="admin-dashboard">
       <div className="container">
@@ -84,7 +88,7 @@ const AdminDashboard = () => {
             <h1>Panel de Administración</h1>
             <p>Gestiona y da seguimiento a los reportes ciudadanos</p>
           </div>
-          
+
           <div className="admin-info">
             <div className="admin-avatar">
               <Users size={24} />
@@ -95,7 +99,7 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-icon total">
@@ -106,7 +110,7 @@ const AdminDashboard = () => {
               <p className="stat-number">{stats.total}</p>
             </div>
           </div>
-          
+
           <div className="stat-card">
             <div className="stat-icon nuevos">
               <AlertCircle size={24} />
@@ -116,7 +120,7 @@ const AdminDashboard = () => {
               <p className="stat-number">{stats.nuevos}</p>
             </div>
           </div>
-          
+
           <div className="stat-card">
             <div className="stat-icon en-proceso">
               <Clock size={24} />
@@ -126,7 +130,7 @@ const AdminDashboard = () => {
               <p className="stat-number">{stats.en_proceso}</p>
             </div>
           </div>
-          
+
           <div className="stat-card">
             <div className="stat-icon resueltos">
               <CheckCircle size={24} />
@@ -147,31 +151,31 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="reports-section">
           <div className="reports-tabs">
-            <button 
+            <button
               className={`tab-button ${activeTab === 'nuevo' ? 'active' : ''}`}
               onClick={() => setActiveTab('nuevo')}
             >
               <AlertCircle size={20} />
               Nuevos
             </button>
-            <button 
+            <button
               className={`tab-button ${activeTab === 'en_proceso' ? 'active' : ''}`}
               onClick={() => setActiveTab('en_proceso')}
             >
               <Clock size={20} />
               En Proceso
             </button>
-            <button 
+            <button
               className={`tab-button ${activeTab === 'resuelto' ? 'active' : ''}`}
               onClick={() => setActiveTab('resuelto')}
             >
               <CheckCircle size={20} />
               Resueltos
             </button>
-            <button 
+            <button
               className={`tab-button ${activeTab === 'cerrado' ? 'active' : ''}`}
               onClick={() => setActiveTab('cerrado')}
             >
@@ -179,7 +183,7 @@ const AdminDashboard = () => {
               Cerrados
             </button>
           </div>
-          
+
           {isLoading ? (
             <div className="loading-container">
               <div className="loading"></div>
@@ -196,7 +200,7 @@ const AdminDashboard = () => {
                 <div key={report.id} className="report-wrapper">
                   <ReportCard report={report} />
                   <div className="report-actions">
-                    <button 
+                    <button
                       className="action-button update-status"
                       onClick={() => handleStatusChange(report.id, getNextStatus(report.estado))}
                       disabled={updatingReportId === report.id || report.estado === 'cerrado'}

@@ -125,6 +125,36 @@ const Header = memo(() => {
     setShowLogoutModal(false)
   }, [])
 
+  // Configuración de elementos de navegación según el tipo de usuario
+  const getNavigationItems = useCallback(() => {
+    const mainItems = []
+
+    // Elementos base siempre disponibles
+    mainItems.push({
+      to: '/',
+      label: 'Inicio',
+      icon: Home
+    })
+
+    mainItems.push({
+      to: '/reports',
+      label: 'Reportes',
+      icon: FileText
+    })
+
+    // Solo mostrar "Crear Reporte" para usuarios autenticados que NO son administradores
+    // O para usuarios no autenticados (modo invitado)
+    if (!isAuthenticated || (isAuthenticated && !isAdmin)) {
+      mainItems.push({
+        to: '/create-report',
+        label: 'Crear Reporte',
+        icon: PlusCircle
+      })
+    }
+
+    return mainItems
+  }, [isAuthenticated, isAdmin])
+
   // Configuración de elementos de navegación autenticados
   const getAuthenticatedNavItems = useCallback(() => {
     const items = []
@@ -187,7 +217,7 @@ const Header = memo(() => {
         >
           <ul className="nav-list" role="menubar">
             {/* Elementos de Navegación Principal */}
-            {NAVIGATION_CONFIG.main.map((item) => (
+            {getNavigationItems().map((item) => (
               <NavItem
                 key={item.to}
                 item={item}
