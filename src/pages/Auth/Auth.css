@@ -307,34 +307,89 @@
   }
 }
 
-.test-accounts {
+.test-accounts-dropdown {
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid #e5e7eb;
 }
 
-.test-accounts h3 {
-  font-size: 0.7rem;
-  margin-bottom: 0.5rem;
-  color: #6b7280;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.test-accounts ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  font-size: 0.7rem;
-  color: #6b7280;
-  display: grid;
-  gap: 0.35rem;
-}
-
-.test-accounts li {
-  padding: 0.4rem;
+.test-accounts-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: between;
+  padding: 0.75rem 1rem;
   background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.test-accounts-toggle:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.test-accounts-toggle span {
+  flex: 1;
+  text-align: left;
+}
+
+.test-accounts-content {
+  margin-top: 0.5rem;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.test-account-item {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.test-account-item:last-child {
+  border-bottom: none;
+}
+
+.test-account-item strong {
+  color: #374151;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.account-credentials {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.75rem;
+}
+
+.account-credentials span {
+  color: #6b7280;
+  background-color: #f9fafb;
+  padding: 0.25rem 0.5rem;
   border-radius: 4px;
   border: 1px solid #e5e7eb;
 }

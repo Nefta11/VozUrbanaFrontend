@@ -20,7 +20,7 @@ export const ReportsProvider = ({ children }) => {
   const fetchReports = useCallback(async () => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const data = await reportsAPI.getAll()
       setReports(data)
@@ -48,7 +48,7 @@ export const ReportsProvider = ({ children }) => {
   const getReportById = useCallback(async (id) => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const report = await reportsAPI.getById(id)
       return report
@@ -63,7 +63,7 @@ export const ReportsProvider = ({ children }) => {
   const getReportsByUser = useCallback(async (userId) => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const reports = await reportsAPI.getByUser(userId)
       return reports
@@ -78,7 +78,7 @@ export const ReportsProvider = ({ children }) => {
   const getReportsByStatus = useCallback(async (status) => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const reports = await reportsAPI.getByStatus(status)
       return reports
@@ -93,13 +93,13 @@ export const ReportsProvider = ({ children }) => {
   const updateStatus = useCallback(async (reportId, newStatus) => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const updatedReport = await reportsAPI.updateStatus(reportId, newStatus)
-      setReports(prev => 
+      setReports(prev =>
         prev.map(report => report.id === reportId ? updatedReport : report)
       )
-      setFilteredReports(prev => 
+      setFilteredReports(prev =>
         prev.map(report => report.id === reportId ? updatedReport : report)
       )
       return updatedReport
@@ -114,7 +114,7 @@ export const ReportsProvider = ({ children }) => {
   const createReport = useCallback(async (reportData) => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const newReport = await reportsAPI.create(reportData)
       setReports(prev => [...prev, newReport])
@@ -131,13 +131,13 @@ export const ReportsProvider = ({ children }) => {
   const updateReport = useCallback(async (id, reportData) => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const updatedReport = await reportsAPI.update(id, reportData)
-      setReports(prev => 
+      setReports(prev =>
         prev.map(report => report.id === id ? updatedReport : report)
       )
-      setFilteredReports(prev => 
+      setFilteredReports(prev =>
         prev.map(report => report.id === id ? updatedReport : report)
       )
       return updatedReport
@@ -152,10 +152,10 @@ export const ReportsProvider = ({ children }) => {
   const voteReport = useCallback(async (id, voteType) => {
     try {
       const updatedReport = await reportsAPI.vote(id, voteType)
-      setReports(prev => 
+      setReports(prev =>
         prev.map(report => report.id === id ? updatedReport : report)
       )
-      setFilteredReports(prev => 
+      setFilteredReports(prev =>
         prev.map(report => report.id === id ? updatedReport : report)
       )
       return updatedReport
@@ -168,10 +168,10 @@ export const ReportsProvider = ({ children }) => {
   const addComment = useCallback(async (reportId, comment) => {
     try {
       const updatedReport = await reportsAPI.addComment(reportId, comment)
-      setReports(prev => 
+      setReports(prev =>
         prev.map(report => report.id === reportId ? updatedReport : report)
       )
-      setFilteredReports(prev => 
+      setFilteredReports(prev =>
         prev.map(report => report.id === reportId ? updatedReport : report)
       )
       return updatedReport
@@ -183,41 +183,41 @@ export const ReportsProvider = ({ children }) => {
 
   const applyFilters = useCallback(() => {
     let result = [...reports]
-    
+
     // Filter by category
     if (filters.category) {
-      result = result.filter(report => 
+      result = result.filter(report =>
         report.categoria === filters.category
       )
     }
-    
+
     // Filter by status
     if (filters.status) {
-      result = result.filter(report => 
+      result = result.filter(report =>
         report.estado === filters.status
       )
     }
-    
+
     // Filter by search term
     if (filters.search) {
       const searchTerm = filters.search.toLowerCase()
-      result = result.filter(report => 
-        report.titulo.toLowerCase().includes(searchTerm) || 
+      result = result.filter(report =>
+        report.titulo.toLowerCase().includes(searchTerm) ||
         report.descripcion.toLowerCase().includes(searchTerm) ||
         report.ubicacion.toLowerCase().includes(searchTerm)
       )
     }
-    
+
     // Sort results
     if (filters.sortBy === 'date') {
       result.sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
     } else if (filters.sortBy === 'votes') {
-      result.sort((a, b) => 
-        (b.votos_positivos - b.votos_negativos) - 
+      result.sort((a, b) =>
+        (b.votos_positivos - b.votos_negativos) -
         (a.votos_positivos - a.votos_negativos)
       )
     }
-    
+
     setFilteredReports(result)
   }, [reports, filters])
 
