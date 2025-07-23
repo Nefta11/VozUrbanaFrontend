@@ -99,7 +99,7 @@ const Header = memo(() => {
     logout()
     setShowLogoutModal(false)
     showNotification('Has cerrado sesión correctamente', 'success')
-    navigate('/')
+    navigate('/login')
   }, [logout, showNotification, navigate])
 
   const handleLogoutCancel = useCallback(() => {
