@@ -226,22 +226,49 @@ export const reportsAPI = {
   // Get report by ID
   async getById(id) {
     try {
+      console.log(`🔍 Obteniendo reporte con ID: ${id}`);
       const response = await apiClient.get(`/reports/${id}`);
+      console.log(
+        `🔄 Respuesta del backend para reporte ${id}:`,
+        response.data
+      );
+
       const report = response.data;
 
+      // Primero obtenemos las categorías para mapear ID a nombre
+      const categories = await this.getCategories();
+      const categoriesMap = categories.reduce((acc, cat) => {
+        acc[cat.id] = cat.nombre;
+        return acc;
+      }, {});
+
       // Obtener votos y comentarios en paralelo
+      console.log(`🔄 Obteniendo votos y comentarios para reporte ${id}`);
       const [votesResponse, commentsResponse] = await Promise.all([
-        apiClient
-          .get(`/votos/${id}`)
-          .catch(() => ({ data: { up: 0, down: 0, total: 0 } })),
-        apiClient.get(`/comentarios/${id}`).catch(() => ({ data: [] })),
+        apiClient.get(`/votos/${id}`).catch((error) => {
+          console.log(
+            `⚠️ Error obteniendo votos para reporte ${id}:`,
+            error.message
+          );
+          return { data: { up: 0, down: 0, total: 0 } };
+        }),
+        apiClient.get(`/comentarios/${id}`).catch((error) => {
+          console.log(
+            `⚠️ Error obteniendo comentarios para reporte ${id}:`,
+            error.message
+          );
+          return { data: [] };
+        }),
       ]);
 
-      return {
+      console.log(`✅ Votos obtenidos:`, votesResponse.data);
+      console.log(`✅ Comentarios obtenidos:`, commentsResponse.data);
+
+      const processedReport = {
         id: report.id,
         titulo: report.titulo,
         descripcion: report.descripcion,
-        categoria: report.categoria_id?.toString() || "6",
+        categoria: categoriesMap[report.categoria_id] || "Otros", // Mapear ID a nombre
         ubicacion: report.ubicacion,
         latitud: report.latitud,
         longitud: report.longitud,
@@ -257,6 +284,7 @@ export const reportsAPI = {
         usuario: {
           id: report.User?.id || report.usuario_id,
           nombre: report.User?.nombre || "Usuario",
+          email: report.User?.email || "",
         },
         imagen: report.imagen_url,
         comentarios: commentsResponse.data.map((comment) => ({
@@ -269,7 +297,18 @@ export const reportsAPI = {
           },
         })),
       };
+
+      console.log(`✅ Reporte procesado:`, processedReport);
+      return processedReport;
     } catch (error) {
+      console.error(`❌ Error en getById para reporte ${id}:`, {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+      });
+
       const message =
         error.response?.data?.message || "Error al obtener reporte";
       throw new Error(message);
