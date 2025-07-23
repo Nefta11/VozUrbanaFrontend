@@ -1,8 +1,6 @@
 import { useState, memo, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  ThumbsUp,
-  ThumbsDown,
   MessageSquare,
   Calendar,
   MapPin,
@@ -15,10 +13,8 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { useAuth } from '../../hooks/useAuth'
-import { useReports } from '../../hooks/useReports'
-import { useNotification } from '../../hooks/useNotification'
 import CategoryBadge from '../CategoryBadge/CategoryBadge'
+import VoteButtons from '../VoteButtons/VoteButtons'
 import './ReportCard.css'
 import PropTypes from 'prop-types'
 
@@ -30,14 +26,6 @@ const REPORT_CARD_CONFIG = {
       medium: 16,
       large: 18,
       xlarge: 48
-    }
-  },
-  votes: {
-    messages: {
-      up: 'Voto positivo registrado',
-      down: 'Voto negativo registrado',
-      loginRequired: 'Debes iniciar sesión para votar',
-      error: 'Error al registrar el voto'
     }
   },
   status: {
@@ -167,9 +155,6 @@ PriorityIndicator.displayName = 'PriorityIndicator'
 const ReportCard = memo(({ report }) => {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
-  const { isAuthenticated, user } = useAuth()
-  const { voteReport } = useReports()
-  const { showNotification } = useNotification()
 
   // Manejadores optimizados para la imagen
   const handleImageLoad = useCallback(() => {
@@ -181,31 +166,7 @@ const ReportCard = memo(({ report }) => {
     setImageLoaded(true)
   }, [])
 
-  // Manejador optimizado para votos
-  const handleVote = useCallback(async (voteType) => {
-    if (!isAuthenticated) {
-      showNotification(REPORT_CARD_CONFIG.votes.messages.loginRequired, 'warning')
-      return
-    }
-
-    try {
-      await voteReport(report.id, voteType, user.id)
-      const message = voteType === 'up' 
-        ? REPORT_CARD_CONFIG.votes.messages.up 
-        : REPORT_CARD_CONFIG.votes.messages.down
-      showNotification(message, 'success')
-    } catch (error) {
-      console.error('Error votando:', error)
-      showNotification(REPORT_CARD_CONFIG.votes.messages.error, 'error')
-    }
-  }, [isAuthenticated, showNotification, voteReport, report.id, user?.id])
-
   // Cálculos memorizados
-  const userVote = useMemo(() => {
-    if (!isAuthenticated || !user) return null
-    return report.votos_usuarios?.[user.id] || null
-  }, [isAuthenticated, user, report.votos_usuarios])
-
   const totalVotes = useMemo(() => {
     return report.votos_positivos + report.votos_negativos
   }, [report.votos_positivos, report.votos_negativos])
@@ -270,31 +231,14 @@ const ReportCard = memo(({ report }) => {
         {/* Footer con acciones */}
         <footer className="report-footer">
           {/* Sección de votación */}
-          <div className="report-votes" role="group" aria-label="Votación del reporte">
-            <button
-              className={`vote-button vote-up ${userVote === 'up' ? 'active' : ''}`}
-              onClick={() => handleVote('up')}
-              aria-label={`Votar positivo (${report.votos_positivos} votos)`}
-              title={`${report.votos_positivos} votos positivos`}
-              disabled={!isAuthenticated}
-              type="button"
-            >
-              <ThumbsUp size={REPORT_CARD_CONFIG.icons.size.large} aria-hidden="true" />
-              <span>{report.votos_positivos}</span>
-            </button>
-
-            <button
-              className={`vote-button vote-down ${userVote === 'down' ? 'active' : ''}`}
-              onClick={() => handleVote('down')}
-              aria-label={`Votar negativo (${report.votos_negativos} votos)`}
-              title={`${report.votos_negativos} votos negativos`}
-              disabled={!isAuthenticated}
-              type="button"
-            >
-              <ThumbsDown size={REPORT_CARD_CONFIG.icons.size.large} aria-hidden="true" />
-              <span>{report.votos_negativos}</span>
-            </button>
-          </div>
+          <VoteButtons
+            reportId={report.id}
+            initialVotes={{
+              positivos: report.votos_positivos,
+              negativos: report.votos_negativos
+            }}
+            compact={true}
+          />
 
           {/* Enlace a comentarios */}
           <Link

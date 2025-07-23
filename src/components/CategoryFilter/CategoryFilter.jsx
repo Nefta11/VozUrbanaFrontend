@@ -31,8 +31,8 @@ const CategoryFilter = memo(() => {
   }, [setFilters])
 
   // Handler específico para categorías con toggle
-  const handleCategoryChange = useCallback((categoryId) => {
-    const newValue = categoryId === filters.category ? '' : categoryId
+  const handleCategoryChange = useCallback((categoryName) => {
+    const newValue = categoryName === filters.category ? '' : categoryName
     handleFilterChange('category', newValue)
   }, [filters.category, handleFilterChange])
 
@@ -55,9 +55,9 @@ const CategoryFilter = memo(() => {
           {categories?.map(category => (
             <button
               key={category.id}
-              className={`category-button ${filters.category === category.id ? 'active' : ''}`}
-              onClick={() => handleCategoryChange(category.id)}
-              aria-pressed={filters.category === category.id}
+              className={`category-button ${filters.category === category.nombre ? 'active' : ''}`}
+              onClick={() => handleCategoryChange(category.nombre)}
+              aria-pressed={filters.category === category.nombre}
               title={`Filtrar por categoría: ${category.nombre}`}
             >
               {category.nombre}
