@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { UserPlus, Loader, AlertCircle } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useNotification } from '../../hooks/useNotification'
-import AlertModal from '../../components/AlertModal/AlertModal'
 import './Auth.css'
 
 const Register = () => {
@@ -19,7 +18,6 @@ const Register = () => {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState({})
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
 
   const updateFormData = (field, value) => {
     setFormData({
@@ -78,14 +76,19 @@ const Register = () => {
         password: formData.password
       }
 
-      const user = await register(userData)
+      const result = await register(userData)
 
-      if (user) {
-        setShowSuccessModal(true)
+      if (result.success) {
+        showNotification('Usuario creado exitosamente. ¡Bienvenido a Voz Urbana!', 'success')
+        setTimeout(() => {
+          navigate('/login')
+        }, 1500) // Pequeño delay para que se vea la notificación
       } else {
-        setErrors({ general: 'Error al registrarse' })
+        showNotification(result.error || 'Error al registrarse', 'error')
+        setErrors({ general: result.error || 'Error al registrarse' })
       }
     } catch (error) {
+      showNotification(error.message || 'Error al registrarse', 'error')
       setErrors({ general: error.message || 'Error al registrarse' })
     } finally {
       setIsLoading(false)
@@ -222,21 +225,6 @@ const Register = () => {
           </div>
         </div>
       </div>
-
-      <AlertModal
-        isOpen={showSuccessModal}
-        type="success"
-        title="¡Registro Exitoso!"
-        message="Tu cuenta ha sido creada correctamente. ¡Bienvenido a Voz Urbana!"
-        primaryAction={{
-          label: 'Comenzar',
-          onClick: () => {
-            setShowSuccessModal(false)
-            showNotification('Cuenta creada exitosamente', 'success')
-            navigate('/')
-          }
-        }}
-      />
     </div>
   )
 }

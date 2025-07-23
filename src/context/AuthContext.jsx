@@ -34,14 +34,12 @@ export const AuthProvider = ({ children }) => {
     setError(null)
 
     try {
-      const newUser = await authAPI.register(userData)
-      setUser(newUser)
-      setIsAuthenticated(true)
-      localStorage.setItem('user', JSON.stringify(newUser))
-      return newUser
+      // Solo llamar al API, no autenticar automáticamente
+      await authAPI.register(userData)
+      return { success: true }
     } catch (err) {
       setError(err.message || 'Error al registrarse')
-      return null
+      return { success: false, error: err.message }
     } finally {
       setIsLoading(false)
     }

@@ -40,12 +40,9 @@ export const authAPI = {
         password: userData.password,
       });
 
-      const { user, token } = response.data;
+      const { user } = response.data;
 
-      // Guardar token en localStorage
-      localStorage.setItem("token", token);
-
-      // Retornar datos del usuario con la estructura esperada por el frontend
+      // No guardar token automáticamente, solo retornar datos del usuario
       return {
         id: user.id,
         nombre: user.nombre,

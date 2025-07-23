@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { LogIn, Loader, AlertCircle, UserX, ChevronDown, ChevronUp } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useNotification } from '../../hooks/useNotification'
-import AlertModal from '../../components/AlertModal/AlertModal'
 import './Auth.css'
 
 const Login = () => {
@@ -18,7 +17,6 @@ const Login = () => {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState({})
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [showTestAccounts, setShowTestAccounts] = useState(false)
 
   const from = location.state?.from?.pathname || "/"
@@ -67,11 +65,16 @@ const Login = () => {
       const user = await login(formData.email, formData.password)
 
       if (user) {
-        setShowSuccessModal(true)
+        showNotification(`¡Bienvenido ${user.nombre}!`, 'success')
+        setTimeout(() => {
+          navigate(from, { replace: true })
+        }, 1000) // Pequeño delay para que se vea la notificación
       } else {
+        showNotification('Credenciales inválidas', 'error')
         setErrors({ general: 'Credenciales inválidas' })
       }
     } catch (error) {
+      showNotification(error.message || 'Error al iniciar sesión', 'error')
       setErrors({ general: error.message || 'Error al iniciar sesión' })
     } finally {
       setIsLoading(false)
@@ -221,21 +224,6 @@ const Login = () => {
           </div>
         </div>
       </div>
-
-      <AlertModal
-        isOpen={showSuccessModal}
-        type="success"
-        title="¡Bienvenido de nuevo!"
-        message="Has iniciado sesión correctamente. ¡Gracias por ser parte de Voz Urbana!"
-        primaryAction={{
-          label: 'Continuar',
-          onClick: () => {
-            setShowSuccessModal(false)
-            showNotification('Inicio de sesión exitoso', 'success')
-            navigate(from, { replace: true })
-          }
-        }}
-      />
     </div>
   )
 }
