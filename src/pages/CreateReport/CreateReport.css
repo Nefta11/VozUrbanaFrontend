@@ -172,36 +172,68 @@ input.input-error, textarea.input-error, select.input-error {
 /* Category selection */
 .category-selection {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1rem;
 }
 
 .category-option {
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  padding: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.3s ease, background-color 0.3s ease;
+  transition: all 0.3s ease;
+  background-color: #ffffff;
+  position: relative;
+  overflow: hidden;
 }
 
 .category-option:hover {
   border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
 }
 
 .category-option.selected {
   border-color: var(--primary-color);
-  background-color: rgba(37, 99, 235, 0.05);
+  background-color: rgba(37, 99, 235, 0.08);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.2);
 }
 
 .category-icon {
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-  color: #64748b;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 1rem;
+  background-color: rgba(37, 99, 235, 0.1);
+  border-radius: 50%;
+  color: var(--primary-color);
+  transition: all 0.3s ease;
+}
+
+.category-option:hover .category-icon {
+  background-color: rgba(37, 99, 235, 0.15);
+  transform: scale(1.1);
+}
+
+.category-option.selected .category-icon {
+  background-color: var(--primary-color);
+  color: white;
 }
 
 .category-name {
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.category-description {
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.4;
 }
 
 /* Priority selection */
@@ -356,6 +388,24 @@ input.input-error, textarea.input-error, select.input-error {
   
   .category-selection {
     grid-template-columns: 1fr;
+  }
+  
+  .category-option {
+    padding: 1rem;
+  }
+  
+  .category-icon {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 0.75rem;
+  }
+  
+  .category-name {
+    font-size: 1rem;
+  }
+  
+  .category-description {
+    font-size: 0.8rem;
   }
   
   .priority-selection {

@@ -1,6 +1,20 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Send, Loader } from 'lucide-react'
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Send, 
+  Loader,
+  Droplets,
+  Construction,
+  Heart,
+  Shield,
+  Leaf,
+  Zap,
+  Bus,
+  AlertCircle,
+  Trash2
+} from 'lucide-react'
 import { useReports } from '../../hooks/useReports'
 import { useAuth } from '../../hooks/useAuth'
 import { useNotification } from '../../hooks/useNotification'
@@ -14,6 +28,26 @@ const CreateReport = () => {
   const { showNotification } = useNotification()
   const { location } = useGeolocation()
   const navigate = useNavigate()
+  
+  // Mapeo de iconos para las categorías
+  const iconMap = {
+    'Droplets': Droplets,
+    'Construction': Construction,
+    'Heart': Heart,
+    'Shield': Shield,
+    'Leaf': Leaf,
+    'Zap': Zap,
+    'Bus': Bus,
+    'AlertCircle': AlertCircle,
+    'Trash2': Trash2,
+    // Fallbacks para compatibilidad
+    'Road': Construction
+  }
+  
+  const getCategoryIcon = (iconName) => {
+    const IconComponent = iconMap[iconName] || AlertCircle
+    return IconComponent
+  }
   
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -114,7 +148,7 @@ const CreateReport = () => {
       const newReport = await createReport(reportData)
       showNotification('Reporte creado exitosamente', 'success')
       navigate(`/reports/${newReport.id}`)
-    } catch (error) {
+    } catch {
       showNotification('Error al crear el reporte', 'error')
       setIsSubmitting(false)
     }
@@ -209,16 +243,22 @@ const CreateReport = () => {
                 <div className="form-group">
                   <label>Categoría*</label>
                   <div className="category-selection">
-                    {categories.map(category => (
-                      <div 
-                        key={category.id}
-                        className={`category-option ${reportData.categoria === category.id ? 'selected' : ''}`}
-                        onClick={() => updateReportData('categoria', category.id)}
-                      >
-                        <div className="category-icon">{category.nombre}</div>
-                        <div className="category-name">{category.nombre}</div>
-                      </div>
-                    ))}
+                    {categories.map(category => {
+                      const IconComponent = getCategoryIcon(category.icono)
+                      return (
+                        <div 
+                          key={category.id}
+                          className={`category-option ${reportData.categoria === category.id ? 'selected' : ''}`}
+                          onClick={() => updateReportData('categoria', category.id)}
+                        >
+                          <div className="category-icon">
+                            <IconComponent size={24} />
+                          </div>
+                          <div className="category-name">{category.nombre}</div>
+                          <div className="category-description">{category.descripcion}</div>
+                        </div>
+                      )
+                    })}
                   </div>
                   {formErrors.categoria && (
                     <span className="error-message">{formErrors.categoria}</span>
