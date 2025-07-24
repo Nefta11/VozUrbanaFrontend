@@ -48,7 +48,6 @@ const Home = () => {
     total: 0,
     resolved: 0,
     inProcess: 0,
-    new: 0,
     closed: 0
   })
   const [featuredReports, setFeaturedReports] = useState([])
@@ -56,16 +55,18 @@ const Home = () => {
   // Calculate statistics
   useEffect(() => {
     if (reports.length > 0) {
+      // Filter out "nuevo" reports for total count and featured reports
+      const visibleReports = reports.filter(r => r.estado !== 'nuevo')
+
       setStats({
-        total: reports.length,
+        total: visibleReports.length,
         resolved: reports.filter(r => r.estado === 'resuelto').length,
         inProcess: reports.filter(r => r.estado === 'en_proceso').length,
-        new: reports.filter(r => r.estado === 'nuevo').length,
         closed: reports.filter(r => r.estado === 'cerrado').length
       })
 
-      // Set featured reports (3 most voted)
-      const sortedReports = [...reports].sort((a, b) =>
+      // Set featured reports (3 most voted, excluding "nuevo")
+      const sortedReports = visibleReports.sort((a, b) =>
         (b.votos_positivos - b.votos_negativos) -
         (a.votos_positivos - a.votos_negativos)
       )
@@ -104,16 +105,6 @@ const Home = () => {
               <div className="stat-content">
                 <h3>Total Reportes</h3>
                 <p className="stat-number">{stats.total}</p>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon new">
-                <AlertCircle size={24} />
-              </div>
-              <div className="stat-content">
-                <h3>Nuevos</h3>
-                <p className="stat-number">{stats.new}</p>
               </div>
             </div>
 

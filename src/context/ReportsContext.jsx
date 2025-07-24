@@ -24,7 +24,7 @@ export const ReportsProvider = ({ children }) => {
     try {
       const data = await reportsAPI.getAll()
       setReports(data)
-      setFilteredReports(data)
+      // Don't set filteredReports here - let the useEffect handle the filtering
       return data
     } catch (err) {
       setError(err.message || 'Error al cargar reportes')
@@ -294,8 +294,13 @@ export const ReportsProvider = ({ children }) => {
     }
   }, [])
 
-  const applyFilters = useCallback(() => {
+  const applyFilters = useCallback((isAdmin = true) => {
     let result = [...reports]
+
+    // Filter out "nuevo" reports for non-admin users
+    if (!isAdmin) {
+      result = result.filter(report => report.estado !== 'nuevo')
+    }
 
     // Filter by category
     if (filters.category) {
@@ -336,7 +341,18 @@ export const ReportsProvider = ({ children }) => {
 
   // Apply filters when filters or reports change
   useEffect(() => {
-    applyFilters()
+    // Get admin status from localStorage token
+    const token = localStorage.getItem('token')
+    let isAdmin = false
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        isAdmin = payload.rol === 'admin'
+      } catch {
+        isAdmin = false
+      }
+    }
+    applyFilters(isAdmin)
   }, [filters, reports, applyFilters])
 
   // Initial data fetch

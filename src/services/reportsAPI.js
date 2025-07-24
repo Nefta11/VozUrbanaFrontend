@@ -114,7 +114,6 @@ export const reportsAPI = {
   // Get all reports
   async getAll() {
     try {
-      console.log("📊 reportsAPI - Starting getAll()...");
       // Primero obtenemos las categorías para mapear IDs a nombres
       const categories = await this.getCategories();
       const categoriesMap = categories.reduce((acc, cat) => {
@@ -122,12 +121,7 @@ export const reportsAPI = {
         return acc;
       }, {});
 
-      console.log("📊 reportsAPI - Fetching reports from API...");
       const response = await apiClient.get("/reports");
-      console.log(
-        "📊 reportsAPI - Raw reports count:",
-        response.data?.length || 0
-      );
 
       // Para cada reporte, obtenemos sus votos y comentarios
       const reportsWithData = await Promise.all(
@@ -211,22 +205,9 @@ export const reportsAPI = {
         })
       );
 
-      console.log(
-        "📊 reportsAPI - Processed reports count:",
-        reportsWithData?.length || 0
-      );
-      if (reportsWithData?.length > 0) {
-        console.log("📊 reportsAPI - Sample processed report:", {
-          id: reportsWithData[0].id,
-          titulo: reportsWithData[0].titulo,
-          categoria: reportsWithData[0].categoria,
-          latitud: reportsWithData[0].latitud,
-          longitud: reportsWithData[0].longitud,
-        });
-      }
       return reportsWithData;
     } catch (error) {
-      console.error("📊 reportsAPI - Error in getAll():", error);
+      console.error("Error en getAll():", error);
       const message =
         error.response?.data?.message || "Error al obtener reportes";
       throw new Error(message);
@@ -283,18 +264,10 @@ export const reportsAPI = {
 
       // Obtener votos y comentarios en paralelo
       const [votesResponse, commentsResponse] = await Promise.all([
-        apiClient.get(`/votos/${id}`).catch((error) => {
-          console.log(
-            `⚠️ Error obteniendo votos para reporte ${id}:`,
-            error.message
-          );
+        apiClient.get(`/votos/${id}`).catch(() => {
           return { data: { up: 0, down: 0, total: 0 } };
         }),
-        apiClient.get(`/comentarios/${id}`).catch((error) => {
-          console.log(
-            `⚠️ Error obteniendo comentarios para reporte ${id}:`,
-            error.message
-          );
+        apiClient.get(`/comentarios/${id}`).catch(() => {
           return { data: [] };
         }),
       ]);
@@ -335,14 +308,6 @@ export const reportsAPI = {
 
       return processedReport;
     } catch (error) {
-      console.error(`❌ Error en getById para reporte ${id}:`, {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.config?.url,
-      });
-
       const message =
         error.response?.data?.message || "Error al obtener reporte";
       throw new Error(message);
