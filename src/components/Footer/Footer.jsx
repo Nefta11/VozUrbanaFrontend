@@ -44,7 +44,7 @@ const FOOTER_DATA = {
   contact: [
     { icon: Mail, text: "contacto@vozurbana.com", href: "mailto:contacto@vozurbana.com" },
     { icon: Phone, text: "+52 (229) 123-4567", href: "tel:+522291234567" },
-    { icon: MapPin, text: "Veracruz, Ver., México", href: "https://maps.google.com/?q=Veracruz,Mexico" }
+    { icon: MapPin, text: "Xicotepec de Juarez, Puebla , México", href: "https://maps.google.com/?q=Veracruz,Mexico" }
   ],
   social: [
     { icon: Facebook, href: "https://facebook.com/vozurbana", label: "Facebook" },
