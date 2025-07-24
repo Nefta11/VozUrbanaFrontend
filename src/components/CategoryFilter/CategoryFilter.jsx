@@ -47,7 +47,23 @@ const CategoryFilter = memo(() => {
 
   // Handler específico para categorías con toggle
   const handleCategoryChange = useCallback((categoryName) => {
-    const newValue = categoryName === filters.category ? '' : categoryName
+    // Normalizar el nombre visual a nombre interno
+    const normalizeCategoryName = (name) => {
+      const map = {
+        'Saneamiento': 'saneamiento',
+        'Infraestructura': 'infraestructura',
+        'Servicios Públicos': 'servicios_publicos',
+        'Limpieza': 'limpieza',
+        'Seguridad': 'seguridad',
+        'Transporte': 'transporte',
+        'Medio Ambiente': 'medio_ambiente',
+        'Salud Pública': 'salud_publica',
+        'Otros': 'otros'
+      }
+      return map[name] || name
+    }
+    const normalized = normalizeCategoryName(categoryName)
+    const newValue = normalized === filters.category ? '' : normalized
     handleFilterChange('category', newValue)
   }, [filters.category, handleFilterChange])
 
@@ -67,17 +83,35 @@ const CategoryFilter = memo(() => {
       <div className="filter-section">
         <h3>Categorías</h3>
         <div className="category-buttons" role="group" aria-label="Seleccionar categoría">
-          {categories?.map(category => (
-            <button
-              key={category.id}
-              className={`category-button ${filters.category === category.nombre ? 'active' : ''}`}
-              onClick={() => handleCategoryChange(category.nombre)}
-              aria-pressed={filters.category === category.nombre}
-              title={`Filtrar por categoría: ${category.nombre}`}
-            >
-              {category.nombre}
-            </button>
-          ))}
+          {categories?.map(category => {
+            // Normalizar para comparar con el filtro activo
+            const normalizeCategoryName = (name) => {
+              const map = {
+                'Saneamiento': 'saneamiento',
+                'Infraestructura': 'infraestructura',
+                'Servicios Públicos': 'servicios_publicos',
+                'Limpieza': 'limpieza',
+                'Seguridad': 'seguridad',
+                'Transporte': 'transporte',
+                'Medio Ambiente': 'medio_ambiente',
+                'Salud Pública': 'salud_publica',
+                'Otros': 'otros'
+              }
+              return map[name] || name
+            }
+            const normalized = normalizeCategoryName(category.nombre)
+            return (
+              <button
+                key={category.id}
+                className={`category-button ${filters.category === normalized ? 'active' : ''}`}
+                onClick={() => handleCategoryChange(category.nombre)}
+                aria-pressed={filters.category === normalized}
+                title={`Filtrar por categoría: ${category.nombre}`}
+              >
+                {category.nombre}
+              </button>
+            )
+          })}
         </div>
       </div>
 
