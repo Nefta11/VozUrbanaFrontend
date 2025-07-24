@@ -32,13 +32,11 @@ const MAP_CONFIG = {
 // Función utilitaria para geocodificación reversa
 const getAddressFromCoordinates = async (lat, lng) => {
   try {
-    console.log('🔍 Geocodificando:', lat, lng)
     const response = await fetch(
       `${MAP_CONFIG.geocoding.baseUrl}?format=${MAP_CONFIG.geocoding.format}&lat=${lat}&lon=${lng}`
     )
     const data = await response.json()
     const address = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`
-    console.log('🔍 Dirección encontrada:', address)
     return address
   } catch (error) {
     console.warn('Error en geocodificación:', error)
@@ -54,12 +52,9 @@ const LocationMarker = memo(({ position, setPosition, onLocationSelect, setHasUs
     setPosition(newPosition)
     setHasUserSelected(true) // Marcar que el usuario seleccionó manualmente
 
-    console.log('🗺️ MapPicker - Usuario hizo clic en:', newPosition.lat, newPosition.lng)
-
     try {
       // Siempre obtener dirección cuando el usuario hace clic
       const address = await getAddressFromCoordinates(newPosition.lat, newPosition.lng)
-      console.log('🗺️ MapPicker - Dirección obtenida para clic:', address)
       onLocationSelect(newPosition.lat, newPosition.lng, address)
     } catch (error) {
       console.error('🗺️ MapPicker - Error obteniendo dirección:', error)
@@ -123,9 +118,7 @@ const MapPicker = memo(({ initialPosition, onLocationSelect, autoInitialize = tr
       // Solo obtener dirección automáticamente si autoInitialize es true
       if (autoInitialize) {
         const initializeAddress = async () => {
-          console.log('🗺️ MapPicker - Inicializando dirección para:', initialPosition)
           const address = await getAddressFromCoordinates(initialPosition[0], initialPosition[1])
-          console.log('🗺️ MapPicker - Dirección obtenida:', address)
           onLocationSelect(initialPosition[0], initialPosition[1], address)
         }
 

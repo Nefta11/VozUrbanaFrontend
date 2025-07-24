@@ -177,17 +177,7 @@ const MapView = memo(({ height = '500px', zoom = MAP_VIEW_CONFIG.defaultZoom, sh
 
   // Debug: Log reports data
   useEffect(() => {
-    console.log('🗺️ MapView - Reports data:', reports)
-    console.log('🗺️ MapView - Reports count:', reports?.length || 0)
-    if (reports && reports.length > 0) {
-      console.log('🗺️ MapView - First report sample:', {
-        id: reports[0].id,
-        titulo: reports[0].titulo,
-        categoria: reports[0].categoria,
-        latitud: reports[0].latitud,
-        longitud: reports[0].longitud
-      })
-    }
+    // Reports data logging removed for production
   }, [reports])
 
   // Manejador optimizado para reintentar carga del mapa
@@ -235,7 +225,6 @@ const MapView = memo(({ height = '500px', zoom = MAP_VIEW_CONFIG.defaultZoom, sh
 
   // Función optimizada para obtener icono por categoría
   const getCategoryIcon = useCallback((category) => {
-    console.log('MapView - Getting icon for category:', category)
     const icon = categoryIcons[category] || categoryIcons.otros
     return icon
   }, [categoryIcons])
@@ -280,9 +269,7 @@ const MapView = memo(({ height = '500px', zoom = MAP_VIEW_CONFIG.defaultZoom, sh
               <ReportPopup report={report} showPopups={showPopups} />
             </Marker>
           ))
-        ) : (
-          console.log('MapView - No reports to render') || null
-        )}
+        ) : null}
       </MapContainer>
     </div>
   )

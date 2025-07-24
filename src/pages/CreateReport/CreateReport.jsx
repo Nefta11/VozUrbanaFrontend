@@ -22,13 +22,11 @@ import { useNotification } from '../../hooks/useNotification'
 // Función utilitaria para geocodificación reversa
 const getAddressFromCoordinates = async (lat, lng) => {
   try {
-    console.log('🔍 Geocodificando en CreateReport:', lat, lng)
     const response = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
     )
     const data = await response.json()
     const address = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`
-    console.log('🔍 Dirección encontrada en CreateReport:', address)
     return address
   } catch (error) {
     console.warn('Error en geocodificación:', error)
@@ -90,11 +88,9 @@ const CreateReport = () => {
   useEffect(() => {
     // Solo actualizar si el usuario no ha seleccionado manualmente una ubicación Y no hay datos previos
     if (location?.latitude && location?.longitude && !hasUserSelectedLocation && !reportData.ubicacion) {
-      console.log('🌍 Inicializando ubicación solo por primera vez:', location)
       // Obtener dirección de las coordenadas iniciales
       getAddressFromCoordinates(location.latitude, location.longitude)
         .then(address => {
-          console.log('🏠 Dirección obtenida para inicialización:', address)
           setReportData(prev => ({
             ...prev,
             latitud: location.latitude,
@@ -173,32 +169,27 @@ const CreateReport = () => {
   }
 
   const handleMapLocationSelect = async (lat, lng, address) => {
-    console.log('📍 Usuario seleccionó ubicación en mapa:', { lat, lng, address })
-
+    
     // Marcar inmediatamente que el usuario seleccionó manualmente
     setHasUserSelectedLocation(true)
-
+    
     // Actualizar coordenadas inmediatamente
-    console.log('📍 Actualizando coordenadas:', lat, lng)
     setReportData(prev => ({
       ...prev,
       latitud: lat,
       longitud: lng
     }))
-
+    
     // Si tenemos una dirección válida (no solo coordenadas), úsala
     if (address && address !== `${lat.toFixed(6)}, ${lng.toFixed(6)}`) {
-      console.log('📍 Usando dirección recibida:', address)
       setReportData(prev => ({
         ...prev,
         ubicacion: address
       }))
     } else {
       // Si no hay dirección válida, obtenerla
-      console.log('🔍 Obteniendo dirección para las coordenadas...')
       try {
         const fetchedAddress = await getAddressFromCoordinates(lat, lng)
-        console.log('🔍 Dirección obtenida:', fetchedAddress)
         setReportData(prev => ({
           ...prev,
           ubicacion: fetchedAddress
@@ -212,7 +203,7 @@ const CreateReport = () => {
       }
     }
   }
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault()
 
