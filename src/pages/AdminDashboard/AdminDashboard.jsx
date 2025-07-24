@@ -36,9 +36,12 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     setIsLoading(true)
-    const filtered = reports.filter(report => report.estado === activeTab)
-    setFilteredReports(filtered)
-    setIsLoading(false)
+    const timer = setTimeout(() => {
+      const filtered = reports.filter(report => report.estado === activeTab)
+      setFilteredReports(filtered)
+      setIsLoading(false)
+    }, 5000)
+    return () => clearTimeout(timer)
   }, [activeTab, reports])
 
   const getStats = () => {
