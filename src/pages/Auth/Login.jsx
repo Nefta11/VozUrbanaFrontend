@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { LogIn, Loader, AlertCircle, UserX, ChevronDown, ChevronUp } from 'lucide-react'
+import { LogIn, Loader, AlertCircle, UserX } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useNotification } from '../../hooks/useNotification'
 import './Auth.css'
@@ -17,7 +17,7 @@ const Login = () => {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState({})
-  const [showTestAccounts, setShowTestAccounts] = useState(false)
+  // Eliminado: sección de cuentas de prueba
 
   const from = location.state?.from?.pathname || "/"
 
@@ -172,43 +172,6 @@ const Login = () => {
 
             <div className="auth-footer">
               <p>¿No tienes una cuenta? <Link to="/register">Regístrate aquí</Link></p>
-            </div>
-
-            <div className="test-accounts-dropdown">
-              <button
-                type="button"
-                className="test-accounts-toggle"
-                onClick={() => setShowTestAccounts(!showTestAccounts)}
-              >
-                <span>Cuentas de prueba</span>
-                {showTestAccounts ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-              </button>
-
-              {showTestAccounts && (
-                <div className="test-accounts-content">
-                  <div className="test-account-item">
-                    <strong>Ciudadano:</strong>
-                    <div className="account-credentials">
-                      <span>maria@email.com</span>
-                      <span>password123</span>
-                    </div>
-                  </div>
-                  <div className="test-account-item">
-                    <strong>Ciudadano:</strong>
-                    <div className="account-credentials">
-                      <span>carlos@email.com</span>
-                      <span>password123</span>
-                    </div>
-                  </div>
-                  <div className="test-account-item">
-                    <strong>Administrador:</strong>
-                    <div className="account-credentials">
-                      <span>admin@vozurbana.com</span>
-                      <span>admin123</span>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
