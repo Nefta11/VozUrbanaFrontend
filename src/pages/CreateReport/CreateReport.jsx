@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   ChevronLeft, 
@@ -57,8 +57,8 @@ const CreateReport = () => {
     categoria: '',
     prioridad: 'media',
     ubicacion: '',
-    latitud: location.latitude,
-    longitud: location.longitude,
+    latitud: location?.latitude || 20.2745,
+    longitud: location?.longitude || -97.9557,
     estado: 'nuevo',
     imagen: '',
     usuario: {
@@ -67,6 +67,38 @@ const CreateReport = () => {
     }
   })
   const [formErrors, setFormErrors] = useState({})
+  
+  // Función para obtener dirección desde coordenadas
+  const getAddressFromCoordinates = async (lat, lng) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+      )
+      const data = await response.json()
+      return data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+    } catch (error) {
+      console.warn('Error en geocodificación:', error)
+      return `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+    }
+  }
+  
+  // Efecto para actualizar la ubicación inicial cuando se obtiene la geolocalización
+  useEffect(() => {
+    if (location?.latitude && location?.longitude && !reportData.ubicacion) {
+      console.log('🌍 Inicializando ubicación:', location)
+      // Obtener dirección de las coordenadas iniciales
+      getAddressFromCoordinates(location.latitude, location.longitude)
+        .then(address => {
+          console.log('🏠 Dirección obtenida:', address)
+          setReportData(prev => ({
+            ...prev,
+            latitud: location.latitude,
+            longitud: location.longitude,
+            ubicacion: address
+          }))
+        })
+    }
+  }, [location, reportData.ubicacion])
   
   const updateReportData = (field, value) => {
     setReportData({
@@ -130,9 +162,12 @@ const CreateReport = () => {
   }
   
   const handleMapLocationSelect = (lat, lng, address) => {
+    console.log('📍 Ubicación seleccionada:', { lat, lng, address })
     updateReportData('latitud', lat)
     updateReportData('longitud', lng)
-    updateReportData('ubicacion', address)
+    // Asegurar que siempre se establezca una dirección
+    const finalAddress = address || `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+    updateReportData('ubicacion', finalAddress)
   }
   
   const handleSubmit = async (e) => {

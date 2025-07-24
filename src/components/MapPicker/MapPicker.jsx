@@ -32,11 +32,14 @@ const MAP_CONFIG = {
 // Función utilitaria para geocodificación reversa
 const getAddressFromCoordinates = async (lat, lng) => {
   try {
+    console.log('🔍 Geocodificando:', lat, lng)
     const response = await fetch(
       `${MAP_CONFIG.geocoding.baseUrl}?format=${MAP_CONFIG.geocoding.format}&lat=${lat}&lon=${lng}`
     )
     const data = await response.json()
-    return data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+    const address = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+    console.log('🔍 Dirección encontrada:', address)
+    return address
   } catch (error) {
     console.warn('Error en geocodificación:', error)
     return `${lat.toFixed(6)}, ${lng.toFixed(6)}`
@@ -97,16 +100,28 @@ const MapPicker = memo(({ initialPosition, onLocationSelect }) => {
   const [position, setPosition] = useState(null)
   const [mapCenter, setMapCenter] = useState(MAP_CONFIG.defaultCenter)
   const [hasUserSelected, setHasUserSelected] = useState(false) // Rastrear selección manual del usuario
+  const [hasInitialized, setHasInitialized] = useState(false) // Rastrear si ya se inicializó
 
   // Efecto para actualizar posición inicial
   useEffect(() => {
-    // Solo actualizar posición si el usuario no ha seleccionado manualmente
-    if (initialPosition && initialPosition[0] && initialPosition[1] && !hasUserSelected) {
+    // Solo actualizar posición si el usuario no ha seleccionado manualmente y no se ha inicializado
+    if (initialPosition && initialPosition[0] && initialPosition[1] && !hasUserSelected && !hasInitialized) {
       const newPosition = { lat: initialPosition[0], lng: initialPosition[1] }
       setPosition(newPosition)
       setMapCenter([initialPosition[0], initialPosition[1]])
+      
+      // Obtener dirección inicial si no se ha proporcionado
+      const initializeAddress = async () => {
+        console.log('🗺️ MapPicker - Inicializando dirección para:', initialPosition)
+        const address = await getAddressFromCoordinates(initialPosition[0], initialPosition[1])
+        console.log('🗺️ MapPicker - Dirección obtenida:', address)
+        onLocationSelect(initialPosition[0], initialPosition[1], address)
+        setHasInitialized(true)
+      }
+      
+      initializeAddress()
     }
-  }, [initialPosition, hasUserSelected])
+  }, [initialPosition, hasUserSelected, hasInitialized, onLocationSelect])
 
   // Manejador optimizado para cambio de posición
   const handlePositionChange = useCallback((lat, lng, address) => {

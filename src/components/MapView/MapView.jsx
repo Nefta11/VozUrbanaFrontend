@@ -77,11 +77,25 @@ const getStatusInfo = (status) => {
 
 // Función utilitaria para crear iconos de marcadores por categoría
 const createCategoryIcon = (category) => {
+  // Mapeo de colores por categoría
+  const categoryColors = {
+    'saneamiento': '#3b82f6',      // Azul
+    'infraestructura': '#f59e0b',   // Amarillo
+    'salud_publica': '#ef4444',     // Rojo
+    'seguridad': '#8b5cf6',         // Púrpura
+    'medio_ambiente': '#10b981',    // Verde
+    'servicios_publicos': '#06b6d4', // Cyan
+    'transporte': '#f97316',        // Naranja
+    'otros': '#6b7280'              // Gris
+  };
+  
+  const color = categoryColors[category] || categoryColors.otros;
+  
   return L.divIcon({
     className: MAP_VIEW_CONFIG.marker.className,
     html: `
       <div class="marker-icon">
-        <div class="marker-pin marker-${category}"></div>
+        <div class="marker-pin" style="background-color: ${color}; border: 3px solid white; border-radius: 50% 50% 50% 0; width: 20px; height: 20px; transform: rotate(-45deg); box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
       </div>
     `,
     iconSize: MAP_VIEW_CONFIG.marker.iconSize,
@@ -161,6 +175,21 @@ const MapView = memo(({ height = '500px', zoom = MAP_VIEW_CONFIG.defaultZoom, sh
   const [mapCenter, setMapCenter] = useState(MAP_VIEW_CONFIG.defaultCenter)
   const [showLocationError, setShowLocationError] = useState(false)
 
+  // Debug: Log reports data
+  useEffect(() => {
+    console.log('🗺️ MapView - Reports data:', reports)
+    console.log('🗺️ MapView - Reports count:', reports?.length || 0)
+    if (reports && reports.length > 0) {
+      console.log('🗺️ MapView - First report sample:', {
+        id: reports[0].id,
+        titulo: reports[0].titulo,
+        categoria: reports[0].categoria,
+        latitud: reports[0].latitud,
+        longitud: reports[0].longitud
+      })
+    }
+  }, [reports])
+
   // Manejador optimizado para reintentar carga del mapa
   const handleRetry = useCallback(() => {
     window.location.reload()
@@ -197,7 +226,7 @@ const MapView = memo(({ height = '500px', zoom = MAP_VIEW_CONFIG.defaultZoom, sh
   // Memorizar iconos de marcadores para evitar recreación
   const categoryIcons = useMemo(() => {
     const icons = {}
-    const categories = ['saneamiento', 'infraestructura', 'salud_publica', 'seguridad', 'medio_ambiente', 'otros']
+    const categories = ['saneamiento', 'infraestructura', 'salud_publica', 'seguridad', 'medio_ambiente', 'servicios_publicos', 'transporte', 'otros']
     categories.forEach(category => {
       icons[category] = createCategoryIcon(category)
     })
@@ -206,7 +235,9 @@ const MapView = memo(({ height = '500px', zoom = MAP_VIEW_CONFIG.defaultZoom, sh
 
   // Función optimizada para obtener icono por categoría
   const getCategoryIcon = useCallback((category) => {
-    return categoryIcons[category] || categoryIcons.otros
+    console.log('MapView - Getting icon for category:', category)
+    const icon = categoryIcons[category] || categoryIcons.otros
+    return icon
   }, [categoryIcons])
 
   // Renderizado condicional para errores
@@ -239,15 +270,19 @@ const MapView = memo(({ height = '500px', zoom = MAP_VIEW_CONFIG.defaultZoom, sh
         />
 
         {/* Marcadores de los reportes */}
-        {reports.map(report => (
-          <Marker
-            key={report.id}
-            position={[report.latitud, report.longitud]}
-            icon={getCategoryIcon(report.categoria)}
-          >
-            <ReportPopup report={report} showPopups={showPopups} />
-          </Marker>
-        ))}
+        {reports && reports.length > 0 ? (
+          reports.map(report => (
+            <Marker
+              key={report.id}
+              position={[report.latitud, report.longitud]}
+              icon={getCategoryIcon(report.categoria)}
+            >
+              <ReportPopup report={report} showPopups={showPopups} />
+            </Marker>
+          ))
+        ) : (
+          console.log('MapView - No reports to render') || null
+        )}
       </MapContainer>
     </div>
   )

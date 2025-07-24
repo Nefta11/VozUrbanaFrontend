@@ -1,6 +1,24 @@
 import apiClient from "../config/api";
 
 export const reportsAPI = {
+  // Helper function to normalize category names for consistent mapping
+  normalizeCategoryName(categoryName) {
+    if (!categoryName) return "otros";
+    
+    const categoryMap = {
+      'Saneamiento': 'saneamiento',
+      'Infraestructura': 'infraestructura', 
+      'Salud Pública': 'salud_publica',
+      'Seguridad': 'seguridad',
+      'Medio Ambiente': 'medio_ambiente',
+      'Servicios Públicos': 'servicios_publicos',
+      'Transporte': 'transporte',
+      'Otros': 'otros'
+    };
+    
+    return categoryMap[categoryName] || 'otros';
+  },
+
   // Get categories from backend
   async getCategories() {
     try {
@@ -96,6 +114,7 @@ export const reportsAPI = {
   // Get all reports
   async getAll() {
     try {
+      console.log('📊 reportsAPI - Starting getAll()...')
       // Primero obtenemos las categorías para mapear IDs a nombres
       const categories = await this.getCategories();
       const categoriesMap = categories.reduce((acc, cat) => {
@@ -103,7 +122,9 @@ export const reportsAPI = {
         return acc;
       }, {});
 
+      console.log('📊 reportsAPI - Fetching reports from API...')
       const response = await apiClient.get("/reports");
+      console.log('📊 reportsAPI - Raw reports count:', response.data?.length || 0)
 
       // Para cada reporte, obtenemos sus votos y comentarios
       const reportsWithData = await Promise.all(
@@ -123,7 +144,7 @@ export const reportsAPI = {
               id: report.id,
               titulo: report.titulo,
               descripcion: report.descripcion,
-              categoria: categoriesMap[report.categoria_id] || "Otros", // Mapear ID a nombre
+              categoria: this.normalizeCategoryName(categoriesMap[report.categoria_id]) || "otros", // Normalizar nombre de categoría
               ubicacion: report.ubicacion,
               latitud: report.latitud,
               longitud: report.longitud,
@@ -157,7 +178,7 @@ export const reportsAPI = {
               id: report.id,
               titulo: report.titulo,
               descripcion: report.descripcion,
-              categoria: categoriesMap[report.categoria_id] || "Otros", // Mapear ID a nombre
+              categoria: this.normalizeCategoryName(categoriesMap[report.categoria_id]) || "otros", // Normalizar nombre de categoría
               ubicacion: report.ubicacion,
               latitud: report.latitud,
               longitud: report.longitud,
@@ -181,8 +202,19 @@ export const reportsAPI = {
         })
       );
 
+      console.log('📊 reportsAPI - Processed reports count:', reportsWithData?.length || 0)
+      if (reportsWithData?.length > 0) {
+        console.log('📊 reportsAPI - Sample processed report:', {
+          id: reportsWithData[0].id,
+          titulo: reportsWithData[0].titulo,
+          categoria: reportsWithData[0].categoria,
+          latitud: reportsWithData[0].latitud,
+          longitud: reportsWithData[0].longitud
+        })
+      }
       return reportsWithData;
     } catch (error) {
+      console.error('📊 reportsAPI - Error in getAll():', error)
       const message =
         error.response?.data?.message || "Error al obtener reportes";
       throw new Error(message);

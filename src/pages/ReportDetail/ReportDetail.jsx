@@ -46,6 +46,16 @@ const ReportDetail = () => {
     
     fetchReport()
   }, [id, getReportById, showNotification])
+
+  // Function to refresh comments when a new comment is added
+  const handleCommentAdded = async () => {
+    try {
+      const updatedReport = await getReportById(id)
+      setReport(updatedReport)
+    } catch (err) {
+      console.error('Error al actualizar comentarios:', err)
+    }
+  }
   
   const formatDate = (dateString) => {
     try {
@@ -168,7 +178,11 @@ const ReportDetail = () => {
             </div>
             
             <div className="report-info-card">
-              <Comments reportId={report.id} />
+              <Comments 
+                reportId={report.id} 
+                comments={report.comentarios || []} 
+                onCommentAdded={handleCommentAdded}
+              />
             </div>
           </div>
           

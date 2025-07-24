@@ -22,11 +22,14 @@ export const ReportsProvider = ({ children }) => {
     setError(null)
 
     try {
+      console.log('🏪 ReportsContext - Fetching reports...')
       const data = await reportsAPI.getAll()
+      console.log('🏪 ReportsContext - Reports fetched, count:', data?.length || 0)
       setReports(data)
       setFilteredReports(data)
       return data
     } catch (err) {
+      console.error('🏪 ReportsContext - Error fetching reports:', err)
       setError(err.message || 'Error al cargar reportes')
       return []
     } finally {
