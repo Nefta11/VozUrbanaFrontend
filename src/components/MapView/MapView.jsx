@@ -169,7 +169,7 @@ ReportPopup.displayName = 'ReportPopup'
 
 // Componente principal optimizado
 const MapView = memo(({ height = '500px', zoom = MAP_VIEW_CONFIG.defaultZoom, showPopups = true }) => {
-  const { reports } = useReports()
+  const { filteredReports } = useReports()
   const { location, error: locationError } = useGeolocation()
   const [mapError, setMapError] = useState(null)
   const [mapCenter, setMapCenter] = useState(MAP_VIEW_CONFIG.defaultCenter)
@@ -178,7 +178,7 @@ const MapView = memo(({ height = '500px', zoom = MAP_VIEW_CONFIG.defaultZoom, sh
   // Debug: Log reports data
   useEffect(() => {
     // Reports data logging removed for production
-  }, [reports])
+  }, [filteredReports])
 
   // Manejador optimizado para reintentar carga del mapa
   const handleRetry = useCallback(() => {
@@ -259,8 +259,8 @@ const MapView = memo(({ height = '500px', zoom = MAP_VIEW_CONFIG.defaultZoom, sh
         />
 
         {/* Marcadores de los reportes */}
-        {reports && reports.length > 0 ? (
-          reports.map(report => (
+        {filteredReports && filteredReports.length > 0 ? (
+          filteredReports.map(report => (
             <Marker
               key={report.id}
               position={[report.latitud, report.longitud]}
