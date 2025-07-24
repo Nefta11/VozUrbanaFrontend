@@ -76,7 +76,9 @@ const Profile = () => {
         <div className="profile-header">
           <div className="profile-info">
             <div className="profile-avatar">
-              <User size={60} />
+              <span className="avatar-initial">
+                {user.nombre ? user.nombre.charAt(0).toUpperCase() : 'U'}
+              </span>
             </div>
             <div className="profile-details">
               <h1>{user.nombre}</h1>

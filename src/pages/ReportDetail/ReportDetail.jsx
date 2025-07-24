@@ -1,33 +1,29 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { 
-  ThumbsUp, 
-  ThumbsDown, 
   Calendar, 
   MapPin, 
   User, 
-  Send, 
   AlertCircle 
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useReports } from '../../hooks/useReports'
-import { useAuth } from '../../hooks/useAuth'
 import { useNotification } from '../../hooks/useNotification'
 import MapView from '../../components/MapView/MapView'
 import CategoryBadge from '../../components/CategoryBadge/CategoryBadge'
+import Comments from '../../components/Comments/Comments'
+import VoteButtons from '../../components/VoteButtons/VoteButtons'
 import './ReportDetail.css'
 
 const ReportDetail = () => {
   const { id } = useParams()
-  const { getReportById, voteReport, addComment } = useReports()
-  const { isAuthenticated, user } = useAuth()
+  const { getReportById } = useReports()
   const { showNotification } = useNotification()
   
   const [report, setReport] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [comment, setComment] = useState('')
   
   // Fetch report data
   useEffect(() => {
@@ -50,57 +46,21 @@ const ReportDetail = () => {
     
     fetchReport()
   }, [id, getReportById, showNotification])
-  
-  const handleVote = async (voteType) => {
-    if (!isAuthenticated) {
-      showNotification('Debes iniciar sesión para votar', 'warning')
-      return
-    }
-    
+
+  // Function to refresh comments when a new comment is added
+  const handleCommentAdded = async () => {
     try {
-      const updatedReport = await voteReport(id, voteType)
+      const updatedReport = await getReportById(id)
       setReport(updatedReport)
-      showNotification('Voto registrado', 'success')
-    } catch (error) {
-      showNotification('Error al votar', 'error')
-    }
-  }
-  
-  const handleCommentSubmit = async (e) => {
-    e.preventDefault()
-    
-    if (!isAuthenticated) {
-      showNotification('Debes iniciar sesión para comentar', 'warning')
-      return
-    }
-    
-    if (!comment.trim()) {
-      showNotification('El comentario no puede estar vacío', 'warning')
-      return
-    }
-    
-    try {
-      const commentData = {
-        texto: comment,
-        usuario: {
-          id: user.id,
-          nombre: user.nombre
-        }
-      }
-      
-      const updatedReport = await addComment(id, commentData)
-      setReport(updatedReport)
-      setComment('')
-      showNotification('Comentario añadido', 'success')
-    } catch (error) {
-      showNotification('Error al añadir comentario', 'error')
+    } catch (err) {
+      console.error('Error al actualizar comentarios:', err)
     }
   }
   
   const formatDate = (dateString) => {
     try {
       return format(new Date(dateString), 'dd MMMM yyyy', { locale: es })
-    } catch (error) {
+    } catch {
       return dateString
     }
   }
@@ -197,25 +157,13 @@ const ReportDetail = () => {
                 </div>
               </div>
               
-              <div className="report-votes">
-                <button 
-                  className="vote-button vote-up" 
-                  onClick={() => handleVote('up')}
-                  aria-label="Voto positivo"
-                >
-                  <ThumbsUp size={20} />
-                  <span>{report.votos_positivos}</span>
-                </button>
-                
-                <button 
-                  className="vote-button vote-down" 
-                  onClick={() => handleVote('down')}
-                  aria-label="Voto negativo"
-                >
-                  <ThumbsDown size={20} />
-                  <span>{report.votos_negativos}</span>
-                </button>
-              </div>
+              <VoteButtons 
+                reportId={report.id}
+                initialVotes={{
+                  positivos: report.votos_positivos,
+                  negativos: report.votos_negativos
+                }}
+              />
             </div>
             
             <div className="report-info-card">
@@ -230,52 +178,11 @@ const ReportDetail = () => {
             </div>
             
             <div className="report-info-card">
-              <h2>Comentarios</h2>
-              
-              {report.comentarios && report.comentarios.length > 0 ? (
-                <div className="comments-list">
-                  {report.comentarios.map(comentario => (
-                    <div className="comment\" key={comentario.id}>
-                      <div className="comment-header">
-                        <div className="comment-user">
-                          <User size={16} />
-                          <span>{comentario.usuario.nombre}</span>
-                        </div>
-                        <div className="comment-date">
-                          {formatDate(comentario.fecha)}
-                        </div>
-                      </div>
-                      <p className="comment-text">{comentario.texto}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="no-comments">No hay comentarios aún. Sé el primero en comentar.</p>
-              )}
-              
-              <form className="comment-form" onSubmit={handleCommentSubmit}>
-                <textarea
-                  placeholder="Escribe un comentario..."
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  required
-                  disabled={!isAuthenticated}
-                ></textarea>
-                <button 
-                  type="submit" 
-                  className="comment-submit"
-                  disabled={!isAuthenticated}
-                >
-                  <Send size={18} />
-                  <span>Enviar</span>
-                </button>
-              </form>
-              
-              {!isAuthenticated && (
-                <p className="login-prompt">
-                  <Link to="/login">Inicia sesión</Link> para dejar un comentario
-                </p>
-              )}
+              <Comments 
+                reportId={report.id} 
+                comments={report.comentarios || []} 
+                onCommentAdded={handleCommentAdded}
+              />
             </div>
           </div>
           

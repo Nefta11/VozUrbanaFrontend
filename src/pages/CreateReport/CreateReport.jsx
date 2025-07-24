@@ -1,9 +1,38 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Send, Loader } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Send,
+  Loader,
+  Droplets,
+  Construction,
+  Heart,
+  Shield,
+  Leaf,
+  Zap,
+  Bus,
+  AlertCircle,
+  Trash2
+} from 'lucide-react'
 import { useReports } from '../../hooks/useReports'
 import { useAuth } from '../../hooks/useAuth'
 import { useNotification } from '../../hooks/useNotification'
+
+// Función utilitaria para geocodificación reversa
+const getAddressFromCoordinates = async (lat, lng) => {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+    )
+    const data = await response.json()
+    const address = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+    return address
+  } catch (error) {
+    console.warn('Error en geocodificación:', error)
+    return `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+  }
+}
 import { useGeolocation } from '../../hooks/useGeolocation'
 import MapPicker from '../../components/MapPicker/MapPicker'
 import './CreateReport.css'
@@ -14,7 +43,27 @@ const CreateReport = () => {
   const { showNotification } = useNotification()
   const { location } = useGeolocation()
   const navigate = useNavigate()
-  
+
+  // Mapeo de iconos para las categorías
+  const iconMap = {
+    'Droplets': Droplets,
+    'Construction': Construction,
+    'Heart': Heart,
+    'Shield': Shield,
+    'Leaf': Leaf,
+    'Zap': Zap,
+    'Bus': Bus,
+    'AlertCircle': AlertCircle,
+    'Trash2': Trash2,
+    // Fallbacks para compatibilidad
+    'Road': Construction
+  }
+
+  const getCategoryIcon = (iconName) => {
+    const IconComponent = iconMap[iconName] || AlertCircle
+    return IconComponent
+  }
+
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [reportData, setReportData] = useState({
@@ -23,8 +72,8 @@ const CreateReport = () => {
     categoria: '',
     prioridad: 'media',
     ubicacion: '',
-    latitud: location.latitude,
-    longitud: location.longitude,
+    latitud: location?.latitude || 20.2745,
+    longitud: location?.longitude || -97.9557,
     estado: 'nuevo',
     imagen: '',
     usuario: {
@@ -33,13 +82,37 @@ const CreateReport = () => {
     }
   })
   const [formErrors, setFormErrors] = useState({})
-  
+  const [hasUserSelectedLocation, setHasUserSelectedLocation] = useState(false) // Rastrear si el usuario seleccionó ubicación manualmente
+
+  // Efecto para actualizar la ubicación inicial cuando se obtiene la geolocalización SOLO la primera vez
+  useEffect(() => {
+    // Solo actualizar si el usuario no ha seleccionado manualmente una ubicación Y no hay datos previos
+    if (location?.latitude && location?.longitude && !hasUserSelectedLocation && !reportData.ubicacion) {
+      // Obtener dirección de las coordenadas iniciales
+      getAddressFromCoordinates(location.latitude, location.longitude)
+        .then(address => {
+          setReportData(prev => ({
+            ...prev,
+            latitud: location.latitude,
+            longitud: location.longitude,
+            ubicacion: address
+          }))
+        })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location?.latitude, location?.longitude]) // Solo depender de las coordenadas para evitar loops infinitos
+
   const updateReportData = (field, value) => {
     setReportData({
       ...reportData,
       [field]: value
     })
-    
+
+    // Si el usuario edita manualmente la ubicación, marcar que ha seleccionado
+    if (field === 'ubicacion' && value.trim()) {
+      setHasUserSelectedLocation(true)
+    }
+
     // Clear error for this field if any
     if (formErrors[field]) {
       setFormErrors({
@@ -48,78 +121,108 @@ const CreateReport = () => {
       })
     }
   }
-  
+
   const validateStep = (step) => {
     let isValid = true
     const errors = {}
-    
+
     if (step === 1) {
       if (!reportData.titulo.trim()) {
         errors.titulo = 'El título es obligatorio'
         isValid = false
       }
-      
+
       if (!reportData.descripcion.trim()) {
         errors.descripcion = 'La descripción es obligatoria'
         isValid = false
       }
     }
-    
+
     if (step === 2) {
       if (!reportData.categoria) {
         errors.categoria = 'Debe seleccionar una categoría'
         isValid = false
       }
     }
-    
+
     if (step === 3) {
       if (!reportData.ubicacion.trim()) {
         errors.ubicacion = 'La ubicación es obligatoria'
         isValid = false
       }
     }
-    
+
     setFormErrors(errors)
     return isValid
   }
-  
+
   const goToNextStep = () => {
     if (validateStep(currentStep)) {
       setCurrentStep(currentStep + 1)
       window.scrollTo(0, 0)
     }
   }
-  
+
   const goToPreviousStep = () => {
     setCurrentStep(currentStep - 1)
     window.scrollTo(0, 0)
   }
-  
-  const handleMapLocationSelect = (lat, lng, address) => {
-    updateReportData('latitud', lat)
-    updateReportData('longitud', lng)
-    updateReportData('ubicacion', address)
+
+  const handleMapLocationSelect = async (lat, lng, address) => {
+    
+    // Marcar inmediatamente que el usuario seleccionó manualmente
+    setHasUserSelectedLocation(true)
+    
+    // Actualizar coordenadas inmediatamente
+    setReportData(prev => ({
+      ...prev,
+      latitud: lat,
+      longitud: lng
+    }))
+    
+    // Si tenemos una dirección válida (no solo coordenadas), úsala
+    if (address && address !== `${lat.toFixed(6)}, ${lng.toFixed(6)}`) {
+      setReportData(prev => ({
+        ...prev,
+        ubicacion: address
+      }))
+    } else {
+      // Si no hay dirección válida, obtenerla
+      try {
+        const fetchedAddress = await getAddressFromCoordinates(lat, lng)
+        setReportData(prev => ({
+          ...prev,
+          ubicacion: fetchedAddress
+        }))
+      } catch (error) {
+        console.error('Error obteniendo dirección:', error)
+        setReportData(prev => ({
+          ...prev,
+          ubicacion: `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+        }))
+      }
+    }
   }
   
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!validateStep(currentStep)) {
       return
     }
-    
+
     setIsSubmitting(true)
-    
+
     try {
       const newReport = await createReport(reportData)
       showNotification('Reporte creado exitosamente', 'success')
       navigate(`/reports/${newReport.id}`)
-    } catch (error) {
+    } catch {
       showNotification('Error al crear el reporte', 'error')
       setIsSubmitting(false)
     }
   }
-  
+
   return (
     <div className="create-report-page">
       <div className="container">
@@ -127,7 +230,7 @@ const CreateReport = () => {
           <h1>Crear Nuevo Reporte</h1>
           <p>Contribuye a mejorar tu comunidad reportando problemas</p>
         </div>
-        
+
         <div className="form-container">
           <div className="progress-bar">
             <div className="progress-steps">
@@ -149,14 +252,14 @@ const CreateReport = () => {
               </div>
             </div>
           </div>
-          
+
           <form className="report-form" onSubmit={handleSubmit}>
             {/* Step 1: Basic Information */}
             {currentStep === 1 && (
               <div className="form-step">
                 <h2>Información Básica</h2>
                 <p className="step-description">Proporciona los detalles principales del problema</p>
-                
+
                 <div className="form-group">
                   <label htmlFor="titulo">Título*</label>
                   <input
@@ -171,7 +274,7 @@ const CreateReport = () => {
                     <span className="error-message">{formErrors.titulo}</span>
                   )}
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="descripcion">Descripción*</label>
                   <textarea
@@ -186,10 +289,10 @@ const CreateReport = () => {
                     <span className="error-message">{formErrors.descripcion}</span>
                   )}
                 </div>
-                
+
                 <div className="form-actions">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="button-next"
                     onClick={goToNextStep}
                   >
@@ -199,50 +302,56 @@ const CreateReport = () => {
                 </div>
               </div>
             )}
-            
+
             {/* Step 2: Category and Priority */}
             {currentStep === 2 && (
               <div className="form-step">
                 <h2>Categoría y Prioridad</h2>
                 <p className="step-description">Clasifica el tipo de problema y su nivel de urgencia</p>
-                
+
                 <div className="form-group">
                   <label>Categoría*</label>
                   <div className="category-selection">
-                    {categories.map(category => (
-                      <div 
-                        key={category.id}
-                        className={`category-option ${reportData.categoria === category.id ? 'selected' : ''}`}
-                        onClick={() => updateReportData('categoria', category.id)}
-                      >
-                        <div className="category-icon">{category.nombre}</div>
-                        <div className="category-name">{category.nombre}</div>
-                      </div>
-                    ))}
+                    {categories.map(category => {
+                      const IconComponent = getCategoryIcon(category.icono)
+                      return (
+                        <div
+                          key={category.id}
+                          className={`category-option ${reportData.categoria === category.id ? 'selected' : ''}`}
+                          onClick={() => updateReportData('categoria', category.id)}
+                        >
+                          <div className="category-icon">
+                            <IconComponent size={24} />
+                          </div>
+                          <div className="category-name">{category.nombre}</div>
+                          <div className="category-description">{category.descripcion}</div>
+                        </div>
+                      )
+                    })}
                   </div>
                   {formErrors.categoria && (
                     <span className="error-message">{formErrors.categoria}</span>
                   )}
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="prioridad">Prioridad</label>
                   <div className="priority-selection">
-                    <div 
+                    <div
                       className={`priority-option ${reportData.prioridad === 'baja' ? 'selected' : ''}`}
                       onClick={() => updateReportData('prioridad', 'baja')}
                     >
                       <div className="priority-color priority-low"></div>
                       <div className="priority-name">Baja</div>
                     </div>
-                    <div 
+                    <div
                       className={`priority-option ${reportData.prioridad === 'media' ? 'selected' : ''}`}
                       onClick={() => updateReportData('prioridad', 'media')}
                     >
                       <div className="priority-color priority-medium"></div>
                       <div className="priority-name">Media</div>
                     </div>
-                    <div 
+                    <div
                       className={`priority-option ${reportData.prioridad === 'alta' ? 'selected' : ''}`}
                       onClick={() => updateReportData('prioridad', 'alta')}
                     >
@@ -251,18 +360,18 @@ const CreateReport = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="form-actions">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="button-back"
                     onClick={goToPreviousStep}
                   >
                     <ChevronLeft size={18} />
                     Anterior
                   </button>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="button-next"
                     onClick={goToNextStep}
                   >
@@ -272,13 +381,13 @@ const CreateReport = () => {
                 </div>
               </div>
             )}
-            
+
             {/* Step 3: Location */}
             {currentStep === 3 && (
               <div className="form-step">
                 <h2>Ubicación</h2>
                 <p className="step-description">Indica dónde se encuentra el problema</p>
-                
+
                 <div className="form-group">
                   <label htmlFor="ubicacion">Dirección*</label>
                   <input
@@ -293,17 +402,18 @@ const CreateReport = () => {
                     <span className="error-message">{formErrors.ubicacion}</span>
                   )}
                 </div>
-                
+
                 <div className="form-group">
                   <label>Selecciona en el mapa</label>
                   <div className="map-picker-container">
-                    <MapPicker 
-                      initialPosition={[reportData.latitud, reportData.longitud]}
+                    <MapPicker
+                      initialPosition={hasUserSelectedLocation ? [reportData.latitud, reportData.longitud] : [location?.latitude || 20.2745, location?.longitude || -97.9557]}
                       onLocationSelect={handleMapLocationSelect}
+                      autoInitialize={false}
                     />
                   </div>
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="imagen">URL de Imagen (opcional)</label>
                   <input
@@ -314,18 +424,18 @@ const CreateReport = () => {
                     placeholder="URL de una imagen del problema"
                   />
                 </div>
-                
+
                 <div className="form-actions">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="button-back"
                     onClick={goToPreviousStep}
                   >
                     <ChevronLeft size={18} />
                     Anterior
                   </button>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="button-next"
                     onClick={goToNextStep}
                   >
@@ -335,13 +445,13 @@ const CreateReport = () => {
                 </div>
               </div>
             )}
-            
+
             {/* Step 4: Review and Submit */}
             {currentStep === 4 && (
               <div className="form-step">
                 <h2>Revisar y Enviar</h2>
                 <p className="step-description">Verifica la información antes de enviar el reporte</p>
-                
+
                 <div className="report-preview">
                   <div className="preview-section">
                     <h3>Información Básica</h3>
@@ -354,7 +464,7 @@ const CreateReport = () => {
                       <span className="field-value description">{reportData.descripcion}</span>
                     </div>
                   </div>
-                  
+
                   <div className="preview-section">
                     <h3>Categoría y Prioridad</h3>
                     <div className="preview-field">
@@ -371,7 +481,7 @@ const CreateReport = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="preview-section">
                     <h3>Ubicación</h3>
                     <div className="preview-field">
@@ -385,7 +495,7 @@ const CreateReport = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   {reportData.imagen && (
                     <div className="preview-section">
                       <h3>Imagen</h3>
@@ -395,10 +505,10 @@ const CreateReport = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="form-actions">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="button-back"
                     onClick={goToPreviousStep}
                     disabled={isSubmitting}
@@ -406,8 +516,8 @@ const CreateReport = () => {
                     <ChevronLeft size={18} />
                     Anterior
                   </button>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     className="button-submit"
                     disabled={isSubmitting}
                   >

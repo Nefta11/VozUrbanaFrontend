@@ -1,12 +1,13 @@
 import { memo, useCallback } from 'react'
 import { useReports } from '../../hooks/useReports'
+import { useAuth } from '../../hooks/useAuth'
 import './CategoryFilter.css'
 
 // Configuración de opciones de filtros
 const FILTER_OPTIONS = {
   status: [
     { value: '', label: 'Todos' },
-    { value: 'nuevo', label: 'Nuevo' },
+    { value: 'nuevo', label: 'Nuevo', adminOnly: true },
     { value: 'en_proceso', label: 'En Proceso' },
     { value: 'resuelto', label: 'Resuelto' },
     { value: 'cerrado', label: 'Cerrado' }
@@ -21,18 +22,48 @@ const FILTER_OPTIONS = {
 
 const CategoryFilter = memo(() => {
   const { categories, filters, setFilters } = useReports()
+  const { isAdmin } = useAuth()
+
+  // Filtrar opciones de estado basado en el rol del usuario
+  const statusOptions = FILTER_OPTIONS.status.filter(option => 
+    !option.adminOnly || isAdmin
+  )
 
   // Handler genérico para cambios en filtros - elimina repetición
   const handleFilterChange = useCallback((filterKey, value) => {
+    // Si el usuario no es admin y está intentando seleccionar "nuevo", no permitirlo
+    if (filterKey === 'status' && value === 'nuevo' && !isAdmin) {
+      return
+    }
+    
     setFilters(prevFilters => ({
       ...prevFilters,
       [filterKey]: value
     }))
-  }, [setFilters])
+  }, [setFilters, isAdmin])
+
+  // Efecto para limpiar filtro "nuevo" si el usuario no es admin
+  const effectiveStatusFilter = (!isAdmin && filters.status === 'nuevo') ? '' : filters.status
 
   // Handler específico para categorías con toggle
-  const handleCategoryChange = useCallback((categoryId) => {
-    const newValue = categoryId === filters.category ? '' : categoryId
+  const handleCategoryChange = useCallback((categoryName) => {
+    // Normalizar el nombre visual a nombre interno
+    const normalizeCategoryName = (name) => {
+      const map = {
+        'Saneamiento': 'saneamiento',
+        'Infraestructura': 'infraestructura',
+        'Servicios Públicos': 'servicios_publicos',
+        'Limpieza': 'limpieza',
+        'Seguridad': 'seguridad',
+        'Transporte': 'transporte',
+        'Medio Ambiente': 'medio_ambiente',
+        'Salud Pública': 'salud_publica',
+        'Otros': 'otros'
+      }
+      return map[name] || name
+    }
+    const normalized = normalizeCategoryName(categoryName)
+    const newValue = normalized === filters.category ? '' : normalized
     handleFilterChange('category', newValue)
   }, [filters.category, handleFilterChange])
 
@@ -52,17 +83,35 @@ const CategoryFilter = memo(() => {
       <div className="filter-section">
         <h3>Categorías</h3>
         <div className="category-buttons" role="group" aria-label="Seleccionar categoría">
-          {categories?.map(category => (
-            <button
-              key={category.id}
-              className={`category-button ${filters.category === category.id ? 'active' : ''}`}
-              onClick={() => handleCategoryChange(category.id)}
-              aria-pressed={filters.category === category.id}
-              title={`Filtrar por categoría: ${category.nombre}`}
-            >
-              {category.nombre}
-            </button>
-          ))}
+          {categories?.map(category => {
+            // Normalizar para comparar con el filtro activo
+            const normalizeCategoryName = (name) => {
+              const map = {
+                'Saneamiento': 'saneamiento',
+                'Infraestructura': 'infraestructura',
+                'Servicios Públicos': 'servicios_publicos',
+                'Limpieza': 'limpieza',
+                'Seguridad': 'seguridad',
+                'Transporte': 'transporte',
+                'Medio Ambiente': 'medio_ambiente',
+                'Salud Pública': 'salud_publica',
+                'Otros': 'otros'
+              }
+              return map[name] || name
+            }
+            const normalized = normalizeCategoryName(category.nombre)
+            return (
+              <button
+                key={category.id}
+                className={`category-button ${filters.category === normalized ? 'active' : ''}`}
+                onClick={() => handleCategoryChange(category.nombre)}
+                aria-pressed={filters.category === normalized}
+                title={`Filtrar por categoría: ${category.nombre}`}
+              >
+                {category.nombre}
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -74,11 +123,11 @@ const CategoryFilter = memo(() => {
             <label htmlFor="status-filter">Estado:</label>
             <select
               id="status-filter"
-              value={filters.status}
+              value={effectiveStatusFilter}
               onChange={(e) => handleFilterChange('status', e.target.value)}
               aria-describedby="status-help"
             >
-              {FILTER_OPTIONS.status.map(option => (
+              {statusOptions.map(option => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>

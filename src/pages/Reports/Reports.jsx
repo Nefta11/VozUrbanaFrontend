@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { MapPin, List } from 'lucide-react'
 import { useReports } from '../../hooks/useReports'
 import ReportCard from '../../components/ReportCard/ReportCard'
+import SkeletonReportList from '../../components/SkeletonReportList/SkeletonReportList'
 import CategoryFilter from '../../components/CategoryFilter/CategoryFilter'
 import MapView from '../../components/MapView/MapView'
 import './Reports.css'
@@ -56,9 +57,7 @@ const Reports = () => {
           
           <main className="reports-content">
             {isLoading ? (
-              <div className="loading-container">
-                <div className="loading"></div>
-              </div>
+              <SkeletonReportList />
             ) : error ? (
               <div className="error-container">
                 <p>{error}</p>

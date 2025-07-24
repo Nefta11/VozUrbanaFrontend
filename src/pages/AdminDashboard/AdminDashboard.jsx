@@ -18,7 +18,7 @@ import './AdminDashboard.css'
 
 const AdminDashboard = () => {
   const { user, isAdmin } = useAuth()
-  const { reports, updateStatus } = useReports()
+  const { reports, updateStatusAdmin } = useReports()
   const { showNotification } = useNotification()
   const navigate = useNavigate()
 
@@ -35,8 +35,11 @@ const AdminDashboard = () => {
   }, [isAdmin, navigate, showNotification])
 
   useEffect(() => {
-    if (reports.length > 0) {
+    // Si reports está vacío, mostrar loader hasta que lleguen datos
+    if (reports.length === 0) {
       setIsLoading(true)
+      setFilteredReports([])
+    } else {
       const filtered = reports.filter(report => report.estado === activeTab)
       setFilteredReports(filtered)
       setIsLoading(false)
@@ -58,7 +61,7 @@ const AdminDashboard = () => {
   const handleStatusChange = async (reportId, newStatus) => {
     setUpdatingReportId(reportId)
     try {
-      await updateStatus(reportId, newStatus)
+      await updateStatusAdmin(reportId, newStatus)
       showNotification('Estado actualizado correctamente', 'success')
     } catch (error) {
       console.error('Error al actualizar estado:', error)
@@ -188,39 +191,41 @@ const AdminDashboard = () => {
             <div className="loading-container">
               <div className="loading"></div>
             </div>
-          ) : filteredReports.length === 0 ? (
-            <div className="no-reports">
-              <AlertTriangle size={48} />
-              <h3>No hay reportes</h3>
-              <p>No se encontraron reportes con el estado seleccionado</p>
-            </div>
           ) : (
-            <div className="reports-grid">
-              {filteredReports.map(report => (
-                <div key={report.id} className="report-wrapper">
-                  <ReportCard report={report} />
-                  <div className="report-actions">
-                    <button
-                      className="action-button update-status"
-                      onClick={() => handleStatusChange(report.id, getNextStatus(report.estado))}
-                      disabled={updatingReportId === report.id || report.estado === 'cerrado'}
-                    >
-                      {updatingReportId === report.id ? (
-                        <>
-                          <Loader size={18} className="spinner" />
-                          Actualizando...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle size={18} />
-                          {report.estado === 'cerrado' ? 'Reporte Cerrado' : `Marcar como ${getNextStatus(report.estado).replace('_', ' ')}`}
-                        </>
-                      )}
-                    </button>
+            filteredReports.length === 0 ? (
+              <div className="no-reports">
+                <AlertTriangle size={48} />
+                <h3>No hay reportes</h3>
+                <p>No se encontraron reportes con el estado seleccionado</p>
+              </div>
+            ) : (
+              <div className="reports-grid">
+                {filteredReports.map(report => (
+                  <div key={report.id} className="report-wrapper">
+                    <ReportCard report={report} />
+                    <div className="report-actions">
+                      <button
+                        className="action-button update-status"
+                        onClick={() => handleStatusChange(report.id, getNextStatus(report.estado))}
+                        disabled={updatingReportId === report.id || report.estado === 'cerrado'}
+                      >
+                        {updatingReportId === report.id ? (
+                          <>
+                            <Loader size={18} className="spinner" />
+                            Actualizando...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle size={18} />
+                            {report.estado === 'cerrado' ? 'Reporte Cerrado' : `Marcar como ${getNextStatus(report.estado).replace('_', ' ')}`}
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )
           )}
         </div>
       </div>

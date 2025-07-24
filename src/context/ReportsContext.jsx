@@ -24,7 +24,7 @@ export const ReportsProvider = ({ children }) => {
     try {
       const data = await reportsAPI.getAll()
       setReports(data)
-      setFilteredReports(data)
+      // Don't set filteredReports here - let the useEffect handle the filtering
       return data
     } catch (err) {
       setError(err.message || 'Error al cargar reportes')
@@ -111,6 +111,34 @@ export const ReportsProvider = ({ children }) => {
     }
   }, [])
 
+  const updateStatusAdmin = useCallback(async (reportId, newStatus, asignado_a = null) => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const updatedReport = await reportsAPI.updateStatusAdmin(reportId, newStatus, asignado_a)
+
+      setReports(prev => {
+        const updated = prev.map(report =>
+          (report.id === reportId || report.id === Number(reportId)) ? updatedReport : report
+        )
+        return updated;
+      })
+      setFilteredReports(prev => {
+        const updated = prev.map(report =>
+          (report.id === reportId || report.id === Number(reportId)) ? updatedReport : report
+        )
+        return updated;
+      })
+      return updatedReport
+    } catch (err) {
+      setError(err.message || `Error al actualizar el estado del reporte ${reportId}`)
+      return null
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
   const createReport = useCallback(async (reportData) => {
     setIsLoading(true)
     setError(null)
@@ -151,38 +179,128 @@ export const ReportsProvider = ({ children }) => {
 
   const voteReport = useCallback(async (id, voteType) => {
     try {
-      const updatedReport = await reportsAPI.vote(id, voteType)
-      setReports(prev =>
-        prev.map(report => report.id === id ? updatedReport : report)
-      )
-      setFilteredReports(prev =>
-        prev.map(report => report.id === id ? updatedReport : report)
-      )
-      return updatedReport
+      const result = await reportsAPI.vote(id, voteType)
+      if (result.success) {
+        // Actualizar el reporte con los nuevos votos
+        const updateReportVotes = (report) => {
+          if (report.id === Number(id)) {
+            return {
+              ...report,
+              votos_positivos: result.votos.positivos,
+              votos_negativos: result.votos.negativos
+            }
+          }
+          return report
+        }
+
+        setReports(prev => prev.map(updateReportVotes))
+        setFilteredReports(prev => prev.map(updateReportVotes))
+
+        return result
+      }
+      return null
     } catch (err) {
       console.error(`Error al votar en reporte ${id}:`, err)
+      setError(err.message || 'Error al votar')
       return null
     }
   }, [])
 
-  const addComment = useCallback(async (reportId, comment) => {
+  const addComment = useCallback(async (reportId, commentData) => {
     try {
-      const updatedReport = await reportsAPI.addComment(reportId, comment)
-      setReports(prev =>
-        prev.map(report => report.id === reportId ? updatedReport : report)
-      )
-      setFilteredReports(prev =>
-        prev.map(report => report.id === reportId ? updatedReport : report)
-      )
-      return updatedReport
+      const result = await reportsAPI.addComment(reportId, commentData)
+      if (result.success) {
+        // Actualizar el reporte con los nuevos comentarios
+        const updateReportComments = (report) => {
+          if (report.id === Number(reportId)) {
+            return {
+              ...report,
+              comentarios: result.comentarios
+            }
+          }
+          return report
+        }
+
+        setReports(prev => prev.map(updateReportComments))
+        setFilteredReports(prev => prev.map(updateReportComments))
+
+        return result
+      }
+      return null
     } catch (err) {
       console.error(`Error al añadir comentario al reporte ${reportId}:`, err)
+      setError(err.message || 'Error al añadir comentario')
       return null
     }
   }, [])
 
-  const applyFilters = useCallback(() => {
+  const deleteComment = useCallback(async (commentId, reportId) => {
+    try {
+      const result = await reportsAPI.deleteComment(commentId)
+      if (result.success) {
+        // Actualizar los comentarios del reporte
+        const updatedComments = await reportsAPI.getComments(reportId)
+
+        const updateReportComments = (report) => {
+          if (report.id === Number(reportId)) {
+            return {
+              ...report,
+              comentarios: updatedComments
+            }
+          }
+          return report
+        }
+
+        setReports(prev => prev.map(updateReportComments))
+        setFilteredReports(prev => prev.map(updateReportComments))
+
+        return result
+      }
+      return null
+    } catch (err) {
+      console.error(`Error al eliminar comentario ${commentId}:`, err)
+      setError(err.message || 'Error al eliminar comentario')
+      return null
+    }
+  }, [])
+
+  const updateComment = useCallback(async (commentId, texto, reportId) => {
+    try {
+      const result = await reportsAPI.updateComment(commentId, texto)
+      if (result.success) {
+        // Actualizar los comentarios del reporte
+        const updatedComments = await reportsAPI.getComments(reportId)
+
+        const updateReportComments = (report) => {
+          if (report.id === Number(reportId)) {
+            return {
+              ...report,
+              comentarios: updatedComments
+            }
+          }
+          return report
+        }
+
+        setReports(prev => prev.map(updateReportComments))
+        setFilteredReports(prev => prev.map(updateReportComments))
+
+        return result
+      }
+      return null
+    } catch (err) {
+      console.error(`Error al actualizar comentario ${commentId}:`, err)
+      setError(err.message || 'Error al actualizar comentario')
+      return null
+    }
+  }, [])
+
+  const applyFilters = useCallback((isAdmin = true) => {
     let result = [...reports]
+
+    // Filter out "nuevo" reports for non-admin users
+    if (!isAdmin) {
+      result = result.filter(report => report.estado !== 'nuevo')
+    }
 
     // Filter by category
     if (filters.category) {
@@ -223,7 +341,18 @@ export const ReportsProvider = ({ children }) => {
 
   // Apply filters when filters or reports change
   useEffect(() => {
-    applyFilters()
+    // Get admin status from localStorage token
+    const token = localStorage.getItem('token')
+    let isAdmin = false
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        isAdmin = payload.rol === 'admin'
+      } catch {
+        isAdmin = false
+      }
+    }
+    applyFilters(isAdmin)
   }, [filters, reports, applyFilters])
 
   // Initial data fetch
@@ -240,14 +369,18 @@ export const ReportsProvider = ({ children }) => {
     isLoading,
     error,
     fetchReports,
+    fetchCategories,
     getReportById,
     getReportsByUser,
     getReportsByStatus,
     createReport,
     updateReport,
     updateStatus,
+    updateStatusAdmin,
     voteReport,
     addComment,
+    updateComment,
+    deleteComment,
     setFilters
   }
 

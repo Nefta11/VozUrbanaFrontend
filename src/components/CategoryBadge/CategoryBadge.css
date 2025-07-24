@@ -96,3 +96,26 @@
   background-color: rgba(107, 114, 128, 0.2);
   border-color: rgba(107, 114, 128, 0.3);
 }
+
+/* Estilo dinámico con variables CSS para categorías del backend */
+.category-badge[style*="--category-color"] {
+  background-color: color-mix(in srgb, var(--category-color) 12%, transparent);
+  color: var(--category-color);
+  border-color: color-mix(in srgb, var(--category-color) 20%, transparent);
+}
+
+.category-badge[style*="--category-color"]:hover {
+  background-color: color-mix(in srgb, var(--category-color) 20%, transparent);
+  border-color: color-mix(in srgb, var(--category-color) 30%, transparent);
+}
+
+/* Fallback para navegadores que no soportan color-mix */
+@supports not (color: color-mix(in srgb, red 50%, blue)) {
+  .category-badge[style*="--category-color"] {
+    opacity: 0.8;
+  }
+  
+  .category-badge[style*="--category-color"]:hover {
+    opacity: 1;
+  }
+}

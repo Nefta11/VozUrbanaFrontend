@@ -1,6 +1,7 @@
 import { createContext, useState, useCallback, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { authAPI } from '../services/authAPI'
+import { setAuthLogoutHandler } from '../config/api'
 
 export const AuthContext = createContext()
 
@@ -33,14 +34,12 @@ export const AuthProvider = ({ children }) => {
     setError(null)
 
     try {
-      const newUser = await authAPI.register(userData)
-      setUser(newUser)
-      setIsAuthenticated(true)
-      localStorage.setItem('user', JSON.stringify(newUser))
-      return newUser
+      // Solo llamar al API, no autenticar automáticamente
+      await authAPI.register(userData)
+      return { success: true }
     } catch (err) {
       setError(err.message || 'Error al registrarse')
-      return null
+      return { success: false, error: err.message }
     } finally {
       setIsLoading(false)
     }
@@ -49,31 +48,63 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(() => {
     setUser(null)
     setIsAuthenticated(false)
-    localStorage.removeItem('user')
+    authAPI.logout() // Esto limpia el token y el user del localStorage
+  }, [])
+
+  // Función para manejar logout automático cuando el token expire
+  const handleTokenExpiration = useCallback(() => {
+    setUser(null)
+    setIsAuthenticated(false)
+    authAPI.logout()
+    setError('Su sesión ha expirado. Por favor, inicie sesión nuevamente.')
   }, [])
 
   const checkAuth = useCallback(() => {
     setIsLoading(true)
 
     const storedUser = localStorage.getItem('user')
-    if (storedUser) {
+    const storedToken = localStorage.getItem('token')
+
+    if (storedUser && storedToken) {
       try {
-        const userData = JSON.parse(storedUser)
-        setUser(userData)
-        setIsAuthenticated(true)
+        // Verificar si el token ha expirado
+        const tokenPayload = JSON.parse(atob(storedToken.split('.')[1]))
+        const currentTime = Date.now() / 1000
+
+        if (tokenPayload.exp < currentTime) {
+          // Token expirado, limpiar todo
+          localStorage.removeItem('user')
+          localStorage.removeItem('token')
+          setError('Sesión expirada. Por favor, inicie sesión nuevamente.')
+        } else {
+          // Token válido
+          const userData = JSON.parse(storedUser)
+          setUser(userData)
+          setIsAuthenticated(true)
+        }
       } catch (err) {
+        // Si hay error al parsear, limpiar todo
         localStorage.removeItem('user')
+        localStorage.removeItem('token')
         setError('Sesión inválida')
         console.error('Error al verificar autenticación:', err)
       }
+    } else if (storedUser || storedToken) {
+      // Si solo existe uno de los dos, limpiar ambos
+      localStorage.removeItem('user')
+      localStorage.removeItem('token')
     }
 
     setIsLoading(false)
   }, [])
 
   useEffect(() => {
+    // Configurar el handler de logout para el interceptor de axios
+    setAuthLogoutHandler(handleTokenExpiration)
+
+    // Verificar autenticación al montar el componente
     checkAuth()
-  }, [checkAuth])
+  }, [checkAuth, handleTokenExpiration])
 
   const value = {
     user,
@@ -83,7 +114,8 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    checkAuth
+    checkAuth,
+    handleTokenExpiration
   }
 
   return (
