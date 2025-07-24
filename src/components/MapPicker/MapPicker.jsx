@@ -54,9 +54,18 @@ const LocationMarker = memo(({ position, setPosition, onLocationSelect, setHasUs
     setPosition(newPosition)
     setHasUserSelected(true) // Marcar que el usuario seleccionó manualmente
 
-    // Obtener dirección de las coordenadas
-    const address = await getAddressFromCoordinates(newPosition.lat, newPosition.lng)
-    onLocationSelect(newPosition.lat, newPosition.lng, address)
+    console.log('🗺️ MapPicker - Usuario hizo clic en:', newPosition.lat, newPosition.lng)
+
+    try {
+      // Siempre obtener dirección cuando el usuario hace clic
+      const address = await getAddressFromCoordinates(newPosition.lat, newPosition.lng)
+      console.log('🗺️ MapPicker - Dirección obtenida para clic:', address)
+      onLocationSelect(newPosition.lat, newPosition.lng, address)
+    } catch (error) {
+      console.error('🗺️ MapPicker - Error obteniendo dirección:', error)
+      // En caso de error, pasar las coordenadas para que CreateReport maneje el fallback
+      onLocationSelect(newPosition.lat, newPosition.lng, null)
+    }
   }, [setPosition, setHasUserSelected, onLocationSelect])
 
   // Configurar eventos del mapa
@@ -96,7 +105,7 @@ const MapInstructions = memo(() => (
 MapInstructions.displayName = 'MapInstructions'
 
 // Componente principal 
-const MapPicker = memo(({ initialPosition, onLocationSelect }) => {
+const MapPicker = memo(({ initialPosition, onLocationSelect, autoInitialize = true }) => {
   const [position, setPosition] = useState(null)
   const [mapCenter, setMapCenter] = useState(MAP_CONFIG.defaultCenter)
   const [hasUserSelected, setHasUserSelected] = useState(false) // Rastrear selección manual del usuario
@@ -109,19 +118,21 @@ const MapPicker = memo(({ initialPosition, onLocationSelect }) => {
       const newPosition = { lat: initialPosition[0], lng: initialPosition[1] }
       setPosition(newPosition)
       setMapCenter([initialPosition[0], initialPosition[1]])
-      
-      // Obtener dirección inicial si no se ha proporcionado
-      const initializeAddress = async () => {
-        console.log('🗺️ MapPicker - Inicializando dirección para:', initialPosition)
-        const address = await getAddressFromCoordinates(initialPosition[0], initialPosition[1])
-        console.log('🗺️ MapPicker - Dirección obtenida:', address)
-        onLocationSelect(initialPosition[0], initialPosition[1], address)
-        setHasInitialized(true)
+      setHasInitialized(true)
+
+      // Solo obtener dirección automáticamente si autoInitialize es true
+      if (autoInitialize) {
+        const initializeAddress = async () => {
+          console.log('🗺️ MapPicker - Inicializando dirección para:', initialPosition)
+          const address = await getAddressFromCoordinates(initialPosition[0], initialPosition[1])
+          console.log('🗺️ MapPicker - Dirección obtenida:', address)
+          onLocationSelect(initialPosition[0], initialPosition[1], address)
+        }
+
+        initializeAddress()
       }
-      
-      initializeAddress()
     }
-  }, [initialPosition, hasUserSelected, hasInitialized, onLocationSelect])
+  }, [initialPosition, hasUserSelected, hasInitialized, autoInitialize, onLocationSelect])
 
   // Manejador optimizado para cambio de posición
   const handlePositionChange = useCallback((lat, lng, address) => {
@@ -169,7 +180,8 @@ LocationMarker.propTypes = {
 // PropTypes para MapPicker  
 MapPicker.propTypes = {
   initialPosition: PropTypes.arrayOf(PropTypes.number),
-  onLocationSelect: PropTypes.func.isRequired
+  onLocationSelect: PropTypes.func.isRequired,
+  autoInitialize: PropTypes.bool
 }
 
 export default MapPicker
