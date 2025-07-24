@@ -35,13 +35,15 @@ const AdminDashboard = () => {
   }, [isAdmin, navigate, showNotification])
 
   useEffect(() => {
-    setIsLoading(true)
-    const timer = setTimeout(() => {
+    // Si reports está vacío, mostrar loader hasta que lleguen datos
+    if (reports.length === 0) {
+      setIsLoading(true)
+      setFilteredReports([])
+    } else {
       const filtered = reports.filter(report => report.estado === activeTab)
       setFilteredReports(filtered)
       setIsLoading(false)
-    }, 5000)
-    return () => clearTimeout(timer)
+    }
   }, [activeTab, reports])
 
   const getStats = () => {
