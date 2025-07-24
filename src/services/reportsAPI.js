@@ -4,19 +4,19 @@ export const reportsAPI = {
   // Helper function to normalize category names for consistent mapping
   normalizeCategoryName(categoryName) {
     if (!categoryName) return "otros";
-    
+
     const categoryMap = {
-      'Saneamiento': 'saneamiento',
-      'Infraestructura': 'infraestructura', 
-      'Salud Pública': 'salud_publica',
-      'Seguridad': 'seguridad',
-      'Medio Ambiente': 'medio_ambiente',
-      'Servicios Públicos': 'servicios_publicos',
-      'Transporte': 'transporte',
-      'Otros': 'otros'
+      Saneamiento: "saneamiento",
+      Infraestructura: "infraestructura",
+      "Salud Pública": "salud_publica",
+      Seguridad: "seguridad",
+      "Medio Ambiente": "medio_ambiente",
+      "Servicios Públicos": "servicios_publicos",
+      Transporte: "transporte",
+      Otros: "otros",
     };
-    
-    return categoryMap[categoryName] || 'otros';
+
+    return categoryMap[categoryName] || "otros";
   },
 
   // Get categories from backend
@@ -114,7 +114,7 @@ export const reportsAPI = {
   // Get all reports
   async getAll() {
     try {
-      console.log('📊 reportsAPI - Starting getAll()...')
+      console.log("📊 reportsAPI - Starting getAll()...");
       // Primero obtenemos las categorías para mapear IDs a nombres
       const categories = await this.getCategories();
       const categoriesMap = categories.reduce((acc, cat) => {
@@ -122,9 +122,12 @@ export const reportsAPI = {
         return acc;
       }, {});
 
-      console.log('📊 reportsAPI - Fetching reports from API...')
+      console.log("📊 reportsAPI - Fetching reports from API...");
       const response = await apiClient.get("/reports");
-      console.log('📊 reportsAPI - Raw reports count:', response.data?.length || 0)
+      console.log(
+        "📊 reportsAPI - Raw reports count:",
+        response.data?.length || 0
+      );
 
       // Para cada reporte, obtenemos sus votos y comentarios
       const reportsWithData = await Promise.all(
@@ -144,7 +147,10 @@ export const reportsAPI = {
               id: report.id,
               titulo: report.titulo,
               descripcion: report.descripcion,
-              categoria: this.normalizeCategoryName(categoriesMap[report.categoria_id]) || "otros", // Normalizar nombre de categoría
+              categoria:
+                this.normalizeCategoryName(
+                  categoriesMap[report.categoria_id]
+                ) || "otros", // Normalizar nombre de categoría
               ubicacion: report.ubicacion,
               latitud: report.latitud,
               longitud: report.longitud,
@@ -178,7 +184,10 @@ export const reportsAPI = {
               id: report.id,
               titulo: report.titulo,
               descripcion: report.descripcion,
-              categoria: this.normalizeCategoryName(categoriesMap[report.categoria_id]) || "otros", // Normalizar nombre de categoría
+              categoria:
+                this.normalizeCategoryName(
+                  categoriesMap[report.categoria_id]
+                ) || "otros", // Normalizar nombre de categoría
               ubicacion: report.ubicacion,
               latitud: report.latitud,
               longitud: report.longitud,
@@ -202,19 +211,22 @@ export const reportsAPI = {
         })
       );
 
-      console.log('📊 reportsAPI - Processed reports count:', reportsWithData?.length || 0)
+      console.log(
+        "📊 reportsAPI - Processed reports count:",
+        reportsWithData?.length || 0
+      );
       if (reportsWithData?.length > 0) {
-        console.log('📊 reportsAPI - Sample processed report:', {
+        console.log("📊 reportsAPI - Sample processed report:", {
           id: reportsWithData[0].id,
           titulo: reportsWithData[0].titulo,
           categoria: reportsWithData[0].categoria,
           latitud: reportsWithData[0].latitud,
-          longitud: reportsWithData[0].longitud
-        })
+          longitud: reportsWithData[0].longitud,
+        });
       }
       return reportsWithData;
     } catch (error) {
-      console.error('📊 reportsAPI - Error in getAll():', error)
+      console.error("📊 reportsAPI - Error in getAll():", error);
       const message =
         error.response?.data?.message || "Error al obtener reportes";
       throw new Error(message);
@@ -258,12 +270,7 @@ export const reportsAPI = {
   // Get report by ID
   async getById(id) {
     try {
-      console.log(`🔍 Obteniendo reporte con ID: ${id}`);
       const response = await apiClient.get(`/reports/${id}`);
-      console.log(
-        `🔄 Respuesta del backend para reporte ${id}:`,
-        response.data
-      );
 
       const report = response.data;
 
@@ -275,7 +282,6 @@ export const reportsAPI = {
       }, {});
 
       // Obtener votos y comentarios en paralelo
-      console.log(`🔄 Obteniendo votos y comentarios para reporte ${id}`);
       const [votesResponse, commentsResponse] = await Promise.all([
         apiClient.get(`/votos/${id}`).catch((error) => {
           console.log(
@@ -292,9 +298,6 @@ export const reportsAPI = {
           return { data: [] };
         }),
       ]);
-
-      console.log(`✅ Votos obtenidos:`, votesResponse.data);
-      console.log(`✅ Comentarios obtenidos:`, commentsResponse.data);
 
       const processedReport = {
         id: report.id,
@@ -330,7 +333,6 @@ export const reportsAPI = {
         })),
       };
 
-      console.log(`✅ Reporte procesado:`, processedReport);
       return processedReport;
     } catch (error) {
       console.error(`❌ Error en getById para reporte ${id}:`, {
@@ -569,6 +571,76 @@ export const reportsAPI = {
     } catch (error) {
       const message =
         error.response?.data?.message || "Error al actualizar estado";
+      throw new Error(message);
+    }
+  },
+
+  // Update report status by Admin (new dedicated endpoint)
+  async updateStatusAdmin(reportId, newStatus, asignado_a = null) {
+    try {
+      const requestData = { estado: newStatus };
+      if (asignado_a !== null) {
+        requestData.asignado_a = asignado_a;
+      }
+
+      // Primero intentemos con la ruta admin específica
+      let response;
+      try {
+        response = await apiClient.patch(
+          `/reports/admin/status/${reportId}`,
+          requestData
+        );
+      } catch (adminError) {
+        // Verificar si es un problema de autenticación
+        if (adminError.response?.status === 401) {
+          throw new Error(
+            "No tienes permisos para realizar esta acción. Verifica que estés logueado como admin."
+          );
+        }
+
+        // Verificar si es un problema de ruta no encontrada
+        if (adminError.response?.status === 404) {
+          throw new Error(
+            "El endpoint de admin no está disponible en el backend. Verifica que la ruta /api/reports/admin/status/:id esté implementada."
+          );
+        }
+
+        // Si falla, intentar con la ruta estándar
+        response = await apiClient.patch(`/reports/${reportId}`, requestData);
+      }
+
+      const report = response.data.report;
+
+      const processedReport = {
+        id: report.id,
+        titulo: report.titulo,
+        descripcion: report.descripcion,
+        categoria: report.categoria_id?.toString() || "6",
+        ubicacion: report.ubicacion,
+        latitud: report.latitud,
+        longitud: report.longitud,
+        estado: report.estado,
+        prioridad: report.prioridad,
+        votos_positivos: 0,
+        votos_negativos: 0,
+        votos_usuarios: {},
+        fecha_creacion: report.fecha_creacion,
+        fecha_actualizacion: report.fecha_actualizacion,
+        asignado_a: report.asignado_a,
+        notas_admin: [],
+        usuario: {
+          id: report.User?.id || report.usuario_id,
+          nombre: report.User?.nombre || "Usuario",
+        },
+        imagen: report.imagen_url,
+        comentarios: [],
+      };
+
+      return processedReport;
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        "Error al actualizar estado del reporte";
       throw new Error(message);
     }
   },

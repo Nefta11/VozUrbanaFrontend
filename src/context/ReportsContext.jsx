@@ -22,14 +22,11 @@ export const ReportsProvider = ({ children }) => {
     setError(null)
 
     try {
-      console.log('🏪 ReportsContext - Fetching reports...')
       const data = await reportsAPI.getAll()
-      console.log('🏪 ReportsContext - Reports fetched, count:', data?.length || 0)
       setReports(data)
       setFilteredReports(data)
       return data
     } catch (err) {
-      console.error('🏪 ReportsContext - Error fetching reports:', err)
       setError(err.message || 'Error al cargar reportes')
       return []
     } finally {
@@ -114,6 +111,34 @@ export const ReportsProvider = ({ children }) => {
     }
   }, [])
 
+  const updateStatusAdmin = useCallback(async (reportId, newStatus, asignado_a = null) => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const updatedReport = await reportsAPI.updateStatusAdmin(reportId, newStatus, asignado_a)
+
+      setReports(prev => {
+        const updated = prev.map(report =>
+          (report.id === reportId || report.id === Number(reportId)) ? updatedReport : report
+        )
+        return updated;
+      })
+      setFilteredReports(prev => {
+        const updated = prev.map(report =>
+          (report.id === reportId || report.id === Number(reportId)) ? updatedReport : report
+        )
+        return updated;
+      })
+      return updatedReport
+    } catch (err) {
+      setError(err.message || `Error al actualizar el estado del reporte ${reportId}`)
+      return null
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
   const createReport = useCallback(async (reportData) => {
     setIsLoading(true)
     setError(null)
@@ -170,7 +195,7 @@ export const ReportsProvider = ({ children }) => {
 
         setReports(prev => prev.map(updateReportVotes))
         setFilteredReports(prev => prev.map(updateReportVotes))
-        
+
         return result
       }
       return null
@@ -198,7 +223,7 @@ export const ReportsProvider = ({ children }) => {
 
         setReports(prev => prev.map(updateReportComments))
         setFilteredReports(prev => prev.map(updateReportComments))
-        
+
         return result
       }
       return null
@@ -215,7 +240,7 @@ export const ReportsProvider = ({ children }) => {
       if (result.success) {
         // Actualizar los comentarios del reporte
         const updatedComments = await reportsAPI.getComments(reportId)
-        
+
         const updateReportComments = (report) => {
           if (report.id === Number(reportId)) {
             return {
@@ -228,7 +253,7 @@ export const ReportsProvider = ({ children }) => {
 
         setReports(prev => prev.map(updateReportComments))
         setFilteredReports(prev => prev.map(updateReportComments))
-        
+
         return result
       }
       return null
@@ -245,7 +270,7 @@ export const ReportsProvider = ({ children }) => {
       if (result.success) {
         // Actualizar los comentarios del reporte
         const updatedComments = await reportsAPI.getComments(reportId)
-        
+
         const updateReportComments = (report) => {
           if (report.id === Number(reportId)) {
             return {
@@ -258,7 +283,7 @@ export const ReportsProvider = ({ children }) => {
 
         setReports(prev => prev.map(updateReportComments))
         setFilteredReports(prev => prev.map(updateReportComments))
-        
+
         return result
       }
       return null
@@ -335,6 +360,7 @@ export const ReportsProvider = ({ children }) => {
     createReport,
     updateReport,
     updateStatus,
+    updateStatusAdmin,
     voteReport,
     addComment,
     updateComment,

@@ -18,7 +18,7 @@ import './AdminDashboard.css'
 
 const AdminDashboard = () => {
   const { user, isAdmin } = useAuth()
-  const { reports, updateStatus } = useReports()
+  const { reports, updateStatusAdmin } = useReports()
   const { showNotification } = useNotification()
   const navigate = useNavigate()
 
@@ -37,9 +37,13 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (reports.length > 0) {
       setIsLoading(true)
-      const filtered = reports.filter(report => report.estado === activeTab)
+      const filtered = reports.filter(report => {
+        return report.estado === activeTab;
+      })
       setFilteredReports(filtered)
       setIsLoading(false)
+    } else {
+      setFilteredReports([])
     }
   }, [activeTab, reports])
 
@@ -58,7 +62,7 @@ const AdminDashboard = () => {
   const handleStatusChange = async (reportId, newStatus) => {
     setUpdatingReportId(reportId)
     try {
-      await updateStatus(reportId, newStatus)
+      await updateStatusAdmin(reportId, newStatus)
       showNotification('Estado actualizado correctamente', 'success')
     } catch (error) {
       console.error('Error al actualizar estado:', error)
