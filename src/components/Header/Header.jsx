@@ -10,7 +10,8 @@ import {
   FileText,
   PlusCircle,
   LogIn,
-  UserPlus
+  UserPlus,
+  BarChart2
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useNotification } from '../../hooks/useNotification'
@@ -129,6 +130,15 @@ const Header = memo(() => {
         to: '/create-report',
         label: 'Crear Reporte',
         icon: PlusCircle
+      })
+    }
+
+    // Mostrar "Dashboard" solo para admin
+    if (isAdmin) {
+      mainItems.push({
+        to: '/dashboard',
+        label: 'Dashboard',
+        icon: BarChart2
       })
     }
 
