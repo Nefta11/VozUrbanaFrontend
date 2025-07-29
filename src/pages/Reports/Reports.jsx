@@ -11,7 +11,10 @@ import './Reports.css'
 const Reports = () => {
   const { filteredReports, isLoading, error, setFilters, filters } = useReports()
   const location = useLocation()
-  const [viewMode, setViewMode] = useState('list') 
+  const [viewMode, setViewMode] = useState('list')
+  const [visibleCount, setVisibleCount] = useState(6)
+  const handleShowMore = () => setVisibleCount((prev) => prev + 6)
+  const handleShowLess = () => setVisibleCount((prev) => Math.max(6, prev - 6))
   
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -74,13 +77,24 @@ const Reports = () => {
             ) : (
               <>
                 <div className="reports-header">
-                  <p>Mostrando {filteredReports.length} reporte(s)</p>
+                  <p>Mostrando {Math.min(visibleCount, filteredReports.length)} de {filteredReports.length} reporte(s)</p>
                 </div>
-                
                 <div className="reports-grid">
-                  {filteredReports.map(report => (
+                  {filteredReports.slice(0, visibleCount).map(report => (
                     <ReportCard key={report.id} report={report} />
                   ))}
+                </div>
+                <div className="reports-pagination" style={{ display: 'flex', gap: '1rem', justifyContent: 'center', margin: '2rem 0' }}>
+                  {visibleCount < filteredReports.length && (
+                    <button className="ver-mas-btn" onClick={handleShowMore} style={{padding:'0.5rem 1.5rem', borderRadius:'6px', background:'#3b82f6', color:'#fff', border:'none', fontWeight:'bold', cursor:'pointer'}}>
+                      Ver más
+                    </button>
+                  )}
+                  {visibleCount > 6 && (
+                    <button className="ver-menos-btn" onClick={handleShowLess} style={{padding:'0.5rem 1.5rem', borderRadius:'6px', background:'#e5e7eb', color:'#222', border:'none', fontWeight:'bold', cursor:'pointer'}}>
+                      Ver menos
+                    </button>
+                  )}
                 </div>
               </>
             )}
