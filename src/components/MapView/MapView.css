@@ -180,6 +180,11 @@
   color: #4b5563;
 }
 
+.status-badge.status-no_aprobado {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
 /* Enlace del popup */
 .map-popup-link {
   display: inline-flex;

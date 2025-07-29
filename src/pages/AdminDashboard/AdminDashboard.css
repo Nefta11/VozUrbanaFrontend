@@ -110,6 +110,11 @@
   color: #6b7280;
 }
 
+.stat-icon.rechazados {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
 .stat-content {
   flex: 1;
 }
@@ -207,6 +212,17 @@
 
 .action-button.update-status:hover {
   background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.action-button.reject-status {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+}
+
+.action-button.reject-status:hover {
+  background-color: #dc2626;
   transform: translateY(-1px);
 }
 

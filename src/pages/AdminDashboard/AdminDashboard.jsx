@@ -8,7 +8,8 @@ import {
   FileText,
   AlertTriangle,
   Loader,
-  XCircle
+  XCircle,
+  X
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useReports } from '../../hooks/useReports'
@@ -52,7 +53,8 @@ const AdminDashboard = () => {
       nuevos: reports.filter(r => r.estado === 'nuevo').length,
       en_proceso: reports.filter(r => r.estado === 'en_proceso').length,
       resueltos: reports.filter(r => r.estado === 'resuelto').length,
-      cerrados: reports.filter(r => r.estado === 'cerrado').length
+      cerrados: reports.filter(r => r.estado === 'cerrado').length,
+      rechazados: reports.filter(r => r.estado === 'no_aprobado').length
     }
   }
 
@@ -69,6 +71,31 @@ const AdminDashboard = () => {
         error?.message || 'Error al actualizar el estado',
         'error'
       )
+    } finally {
+      setUpdatingReportId(null)
+    }
+  }
+
+  const handleReject = async (reportId) => {
+    setUpdatingReportId(reportId)
+    try {
+      await updateStatusAdmin(reportId, 'no_aprobado')
+      showNotification('Reporte rechazado correctamente', 'success')
+      // Cambiar automáticamente a la pestaña de rechazados
+      setActiveTab('no_aprobado')
+    } catch (error) {
+      console.error('Error al rechazar reporte:', error)
+      let errorMessage = 'Error al rechazar el reporte'
+      
+      if (error.message.includes('no_aprobado')) {
+        errorMessage = 'El backend no soporta el estado "rechazado". Revisa las instrucciones en BACKEND_FIX_INSTRUCTIONS.md'
+      } else if (error.message.includes('permisos')) {
+        errorMessage = 'No tienes permisos de administrador'
+      } else {
+        errorMessage = error?.message || 'Error desconocido al rechazar el reporte'
+      }
+      
+      showNotification(errorMessage, 'error')
     } finally {
       setUpdatingReportId(null)
     }
@@ -153,6 +180,16 @@ const AdminDashboard = () => {
               <p className="stat-number">{stats.cerrados}</p>
             </div>
           </div>
+
+          <div className="stat-card">
+            <div className="stat-icon rechazados">
+              <X size={24} />
+            </div>
+            <div className="stat-content">
+              <h3>Rechazados</h3>
+              <p className="stat-number">{stats.rechazados}</p>
+            </div>
+          </div>
         </div>
 
         <div className="reports-section">
@@ -185,6 +222,13 @@ const AdminDashboard = () => {
               <XCircle size={20} />
               Cerrados
             </button>
+            <button
+              className={`tab-button ${activeTab === 'no_aprobado' ? 'active' : ''}`}
+              onClick={() => setActiveTab('no_aprobado')}
+            >
+              <X size={20} />
+              Rechazados
+            </button>
           </div>
 
           {isLoading ? (
@@ -204,10 +248,29 @@ const AdminDashboard = () => {
                   <div key={report.id} className="report-wrapper">
                     <ReportCard report={report} />
                     <div className="report-actions">
+                      {report.estado === 'nuevo' && (
+                        <button
+                          className="action-button reject-status"
+                          onClick={() => handleReject(report.id)}
+                          disabled={updatingReportId === report.id}
+                        >
+                          {updatingReportId === report.id ? (
+                            <>
+                              <Loader size={18} className="spinner" />
+                              Rechazando...
+                            </>
+                          ) : (
+                            <>
+                              <X size={18} />
+                              Rechazar
+                            </>
+                          )}
+                        </button>
+                      )}
                       <button
                         className="action-button update-status"
                         onClick={() => handleStatusChange(report.id, getNextStatus(report.estado))}
-                        disabled={updatingReportId === report.id || report.estado === 'cerrado'}
+                        disabled={updatingReportId === report.id || report.estado === 'cerrado' || report.estado === 'no_aprobado'}
                       >
                         {updatingReportId === report.id ? (
                           <>
@@ -217,7 +280,9 @@ const AdminDashboard = () => {
                         ) : (
                           <>
                             <CheckCircle size={18} />
-                            {report.estado === 'cerrado' ? 'Reporte Cerrado' : `Marcar como ${getNextStatus(report.estado).replace('_', ' ')}`}
+                            {report.estado === 'cerrado' ? 'Reporte Cerrado' : 
+                             report.estado === 'no_aprobado' ? 'Reporte Rechazado' :
+                             `Marcar como ${getNextStatus(report.estado).replace('_', ' ')}`}
                           </>
                         )}
                       </button>

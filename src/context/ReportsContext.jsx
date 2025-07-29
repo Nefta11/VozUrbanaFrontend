@@ -132,8 +132,21 @@ export const ReportsProvider = ({ children }) => {
       })
       return updatedReport
     } catch (err) {
-      setError(err.message || `Error al actualizar el estado del reporte ${reportId}`)
-      return null
+      console.error('Error en updateStatusAdmin:', err)
+      let errorMessage = 'Error al actualizar el estado del reporte'
+      
+      if (err.response?.status === 400) {
+        errorMessage = 'Estado no válido. Verifica que el backend soporte el estado "no_aprobado"'
+      } else if (err.response?.status === 403) {
+        errorMessage = 'No tienes permisos para realizar esta acción'
+      } else if (err.response?.status === 404) {
+        errorMessage = 'Reporte no encontrado'
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+      
+      setError(errorMessage)
+      throw new Error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -294,10 +307,11 @@ export const ReportsProvider = ({ children }) => {
     }
   }, [])
 
-  const applyFilters = useCallback((isAdmin = true) => {
+  const applyFilters = useCallback((isAdmin = false) => {
     let result = [...reports]
 
-    // Filter out "nuevo" reports for non-admin users
+    // Filter out only "nuevo" reports for non-admin users
+    // Keep "no_aprobado" reports visible to all users so they can see their rejected reports
     if (!isAdmin) {
       result = result.filter(report => report.estado !== 'nuevo')
     }

@@ -10,7 +10,8 @@ const FILTER_OPTIONS = {
     { value: 'nuevo', label: 'Nuevo', adminOnly: true },
     { value: 'en_proceso', label: 'En Proceso' },
     { value: 'resuelto', label: 'Resuelto' },
-    { value: 'cerrado', label: 'Cerrado' }
+    { value: 'cerrado', label: 'Cerrado' },
+    { value: 'no_aprobado', label: 'No Aprobado' }
   ],
   sortBy: [
     { value: 'date', label: 'Fecha (más reciente)' },

@@ -50,13 +50,14 @@ const Profile = () => {
   }
 
   const getReportStats = () => {
-    if (!userReports.length) return { total: 0, nuevo: 0, en_proceso: 0, resuelto: 0 }
+    if (!userReports.length) return { total: 0, nuevo: 0, en_proceso: 0, resuelto: 0, rechazados: 0 }
 
     return {
       total: userReports.length,
       nuevo: userReports.filter(r => r.estado === 'nuevo').length,
       en_proceso: userReports.filter(r => r.estado === 'en_proceso').length,
-      resuelto: userReports.filter(r => r.estado === 'resuelto').length
+      resuelto: userReports.filter(r => r.estado === 'resuelto').length,
+      rechazados: userReports.filter(r => r.estado === 'no_aprobado').length
     }
   }
 
@@ -123,6 +124,10 @@ const Profile = () => {
             <div className="stat-card">
               <div className="stat-value">{stats.resuelto}</div>
               <div className="stat-label">Resueltos</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{stats.rechazados}</div>
+              <div className="stat-label">Rechazados</div>
             </div>
           </div>
         )}

@@ -79,6 +79,18 @@
   margin-bottom: 2rem;
 }
 
+@media (min-width: 768px) {
+  .profile-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .profile-stats {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
 .stat-card {
   background-color: white;
   border-radius: 8px;
