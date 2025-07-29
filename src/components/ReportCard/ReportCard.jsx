@@ -9,7 +9,8 @@ import {
   Clock,
   Heart,
   TrendingUp,
-  Image as ImageIcon
+  Image as ImageIcon,
+  X
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -48,6 +49,11 @@ const REPORT_CARD_CONFIG = {
       text: 'Cerrado',
       icon: CheckCircle,
       color: 'gray'
+    },
+    no_aprobado: {
+      text: 'No Aprobado',
+      icon: X,
+      color: 'red'
     }
   },
   priority: {

@@ -35,6 +35,7 @@
   --status-en_proceso: rgba(245, 158, 11, 0.2);
   --status-resuelto: rgba(16, 185, 129, 0.2);
   --status-cerrado: rgba(107, 114, 128, 0.2);
+  --status-no_aprobado: rgba(239, 68, 68, 0.2);
   
   /* Botones */
   --button-padding: 0.75rem 1rem;
@@ -279,6 +280,12 @@
   background: var(--status-cerrado);
   color: #374151;
   border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.status-no_aprobado {
+  background: var(--status-no_aprobado);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 /* Contenido principal de la tarjeta */

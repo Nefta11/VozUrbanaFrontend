@@ -70,7 +70,8 @@ const ReportDetail = () => {
       nuevo: 'Nuevo',
       en_proceso: 'En Proceso',
       resuelto: 'Resuelto',
-      cerrado: 'Cerrado'
+      cerrado: 'Cerrado',
+      no_aprobado: 'No Aprobado'
     }
     return statusMap[status] || status
   }
