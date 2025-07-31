@@ -18,7 +18,8 @@
     "react-dom": "^18.3.1",
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.22.3",
-    "voz-urbana": "file:"
+    "voz-urbana": "file:",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
