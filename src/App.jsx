@@ -14,11 +14,15 @@ import NotFound from './pages/NotFound/NotFound'
 import { useAuth } from './hooks/useAuth'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 import Notification from './components/Notification/Notification'
+import { useWebSocket } from './hooks/useWebSocket'
 import './App.css'
 
 function App() {
   const { isAuthenticated, isAdmin, checkAuth } = useAuth()
   const location = useLocation()
+  
+  // Inicializar WebSocket automáticamente
+  useWebSocket()
 
   useEffect(() => {
     checkAuth()
