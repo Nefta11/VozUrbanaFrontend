@@ -13,7 +13,9 @@ import {
   Zap,
   Bus,
   AlertCircle,
-  Trash2
+  Trash2,
+  Upload,
+  X
 } from 'lucide-react'
 import { useReports } from '../../hooks/useReports'
 import { useAuth } from '../../hooks/useAuth'
@@ -75,7 +77,8 @@ const CreateReport = () => {
     latitud: location?.latitude || 20.2745,
     longitud: location?.longitude || -97.9557,
     estado: 'nuevo',
-    imagen: '',
+    imagen: null,
+    imagenPreview: null,
     usuario: {
       id: user?.id,
       nombre: user?.nombre
@@ -101,6 +104,46 @@ const CreateReport = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location?.latitude, location?.longitude]) // Solo depender de las coordenadas para evitar loops infinitos
+
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validar tipo de archivo
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        showNotification('Solo se permiten archivos de imagen (JPEG, PNG, GIF, WEBP)', 'error');
+        return;
+      }
+
+      // Validar tamaño (5MB máximo)
+      if (file.size > 5 * 1024 * 1024) {
+        showNotification('La imagen no puede ser mayor a 5MB', 'error');
+        return;
+      }
+
+      // Crear URL para vista previa
+      const previewUrl = URL.createObjectURL(file);
+      
+      setReportData(prev => ({
+        ...prev,
+        imagen: file,
+        imagenPreview: previewUrl
+      }));
+    }
+  };
+
+  const removeImage = () => {
+    if (reportData.imagenPreview) {
+      URL.revokeObjectURL(reportData.imagenPreview);
+    }
+    setReportData(prev => ({
+      ...prev,
+      imagen: null,
+      imagenPreview: null
+    }));
+  };
+
 
   const updateReportData = (field, value) => {
     setReportData({
@@ -415,14 +458,44 @@ const CreateReport = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="imagen">URL de Imagen (opcional)</label>
-                  <input
-                    type="text"
-                    id="imagen"
-                    value={reportData.imagen}
-                    onChange={(e) => updateReportData('imagen', e.target.value)}
-                    placeholder="URL de una imagen del problema"
-                  />
+                  <label htmlFor="imagen">Imagen del Problema (opcional)</label>
+                  <div className="image-upload-container">
+                    {!reportData.imagenPreview ? (
+                      <div className="image-upload-area">
+                        <input
+                          type="file"
+                          id="imagen"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="image-input"
+                        />
+                        <label htmlFor="imagen" className="image-upload-label">
+                          <Upload size={32} />
+                          <span>Subir imagen</span>
+                          <small>PNG, JPG, GIF, WEBP hasta 5MB</small>
+                        </label>
+                      </div>
+                    ) : (
+                      <div className="image-preview-container">
+                        <div className="image-preview">
+                          <img src={reportData.imagenPreview} alt="Vista previa" />
+                          <button
+                            type="button"
+                            className="remove-image-btn"
+                            onClick={removeImage}
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                        <div className="image-info">
+                          <span className="image-name">{reportData.imagen?.name}</span>
+                          <span className="image-size">
+                            {(reportData.imagen?.size / 1024 / 1024).toFixed(2)} MB
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="form-actions">
@@ -496,11 +569,15 @@ const CreateReport = () => {
                     </div>
                   </div>
 
-                  {reportData.imagen && (
+                  {reportData.imagenPreview && (
                     <div className="preview-section">
                       <h3>Imagen</h3>
                       <div className="preview-image">
-                        <img src={reportData.imagen} alt="Vista previa" />
+                        <img src={reportData.imagenPreview} alt="Vista previa" />
+                        <div className="image-details">
+                          <span>{reportData.imagen?.name}</span>
+                          <span>{(reportData.imagen?.size / 1024 / 1024).toFixed(2)} MB</span>
+                        </div>
                       </div>
                     </div>
                   )}

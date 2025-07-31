@@ -161,7 +161,7 @@ export const reportsAPI = {
                 id: report.User?.id || report.usuario_id,
                 nombre: report.User?.nombre || "Usuario",
               },
-              imagen: report.imagen_url,
+              imagen: report.imagen_path,
               comentarios: commentsResponse.data.map((comment) => ({
                 id: comment.id,
                 texto: comment.texto,
@@ -198,7 +198,7 @@ export const reportsAPI = {
                 id: report.User?.id || report.usuario_id,
                 nombre: report.User?.nombre || "Usuario",
               },
-              imagen: report.imagen_url,
+              imagen: report.imagen_path,
               comentarios: [],
             };
           }
@@ -294,7 +294,7 @@ export const reportsAPI = {
           nombre: report.User?.nombre || "Usuario",
           email: report.User?.email || "",
         },
-        imagen: report.imagen_url,
+        imagen: report.imagen_path,
         comentarios: commentsResponse.data.map((comment) => ({
           id: comment.id,
           texto: comment.texto,
@@ -360,7 +360,7 @@ export const reportsAPI = {
                 id: report.User?.id || report.usuario_id,
                 nombre: report.User?.nombre || "Usuario",
               },
-              imagen: report.imagen_url,
+              imagen: report.imagen_path,
             };
           } catch {
             // Si hay error con un reporte específico, devolver sin votos
@@ -379,7 +379,7 @@ export const reportsAPI = {
                 id: report.User?.id || report.usuario_id,
                 nombre: report.User?.nombre || "Usuario",
               },
-              imagen: report.imagen_url,
+              imagen: report.imagen_path,
             };
           }
         })
@@ -397,15 +397,28 @@ export const reportsAPI = {
   // Create new report
   async create(reportData) {
     try {
-      const response = await apiClient.post("/reports", {
-        titulo: reportData.titulo,
-        descripcion: reportData.descripcion,
-        categoria_id: parseInt(reportData.categoria),
-        ubicacion: reportData.ubicacion,
-        latitud: reportData.latitud,
-        longitud: reportData.longitud,
-        imagen_url: reportData.imagen,
-        prioridad: reportData.prioridad || "media",
+      // Crear FormData para enviar archivos
+      const formData = new FormData();
+      
+      // Agregar campos de texto
+      formData.append('titulo', reportData.titulo);
+      formData.append('descripcion', reportData.descripcion);
+      formData.append('categoria_id', parseInt(reportData.categoria));
+      formData.append('ubicacion', reportData.ubicacion);
+      formData.append('latitud', reportData.latitud);
+      formData.append('longitud', reportData.longitud);
+      formData.append('prioridad', reportData.prioridad || 'media');
+      
+      // Agregar imagen si existe (archivo)
+      if (reportData.imagen && reportData.imagen instanceof File) {
+        formData.append('imagen', reportData.imagen);
+      }
+
+      // Configurar headers para FormData
+      const response = await apiClient.post("/reports", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       const report = response.data.report;
@@ -428,7 +441,7 @@ export const reportsAPI = {
         asignado_a: report.asignado_a,
         notas_admin: [],
         usuario: reportData.usuario || { id: null, nombre: "Usuario" },
-        imagen: report.imagen_url,
+        imagen: report.imagen_path, // Cambiar imagen_url por imagen_path
         comentarios: [],
       };
     } catch (error) {
@@ -450,7 +463,7 @@ export const reportsAPI = {
       if (reportData.ubicacion) updateData.ubicacion = reportData.ubicacion;
       if (reportData.latitud) updateData.latitud = reportData.latitud;
       if (reportData.longitud) updateData.longitud = reportData.longitud;
-      if (reportData.imagen) updateData.imagen_url = reportData.imagen;
+      if (reportData.imagen) updateData.imagen_path = reportData.imagen;
       if (reportData.prioridad) updateData.prioridad = reportData.prioridad;
       if (reportData.estado) updateData.estado = reportData.estado;
       if (reportData.asignado_a) updateData.asignado_a = reportData.asignado_a;
@@ -479,7 +492,7 @@ export const reportsAPI = {
           id: report.User?.id || report.usuario_id,
           nombre: report.User?.nombre || "Usuario",
         },
-        imagen: report.imagen_url,
+        imagen: report.imagen_path,
         comentarios: [],
       };
     } catch (error) {
@@ -530,7 +543,7 @@ export const reportsAPI = {
           id: report.User?.id || report.usuario_id,
           nombre: report.User?.nombre || "Usuario",
         },
-        imagen: report.imagen_url,
+        imagen: report.imagen_path,
         comentarios: [],
       };
     } catch (error) {
@@ -597,7 +610,7 @@ export const reportsAPI = {
           id: report.User?.id || report.usuario_id,
           nombre: report.User?.nombre || "Usuario",
         },
-        imagen: report.imagen_url,
+        imagen: report.imagen_path,
         comentarios: [],
       };
 
@@ -638,7 +651,7 @@ export const reportsAPI = {
           id: report.User?.id || report.usuario_id,
           nombre: report.User?.nombre || "Usuario",
         },
-        imagen: report.imagen_url,
+        imagen: report.imagen_path,
         comentarios: [],
       }));
     } catch (error) {
