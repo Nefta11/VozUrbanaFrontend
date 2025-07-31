@@ -22,7 +22,7 @@ import ReportCard from '../../components/ReportCard/ReportCard'
 import './Home.css'
 
 const Home = () => {
-  const { reports, categories, isLoading } = useReports()
+  const { filteredReports, categories, isLoading } = useReports()
 
   // Mapeo de iconos para las categorías
   const iconMap = {
@@ -54,25 +54,22 @@ const Home = () => {
 
   // Calculate statistics
   useEffect(() => {
-    if (reports.length > 0) {
-      // Filter out "nuevo" reports for total count and featured reports
-      const visibleReports = reports.filter(r => r.estado !== 'nuevo')
-
+    if (filteredReports.length > 0) {
       setStats({
-        total: visibleReports.length,
-        resolved: reports.filter(r => r.estado === 'resuelto').length,
-        inProcess: reports.filter(r => r.estado === 'en_proceso').length,
-        closed: reports.filter(r => r.estado === 'cerrado').length
+        total: filteredReports.length,
+        resolved: filteredReports.filter(r => r.estado === 'resuelto').length,
+        inProcess: filteredReports.filter(r => r.estado === 'en_proceso').length,
+        closed: filteredReports.filter(r => r.estado === 'cerrado').length
       })
 
-      // Set featured reports (3 most voted, excluding "nuevo")
-      const sortedReports = visibleReports.sort((a, b) =>
+      // Set featured reports (3 most voted, ya filtrados)
+      const sortedReports = [...filteredReports].sort((a, b) =>
         (b.votos_positivos - b.votos_negativos) -
         (a.votos_positivos - a.votos_negativos)
       )
       setFeaturedReports(sortedReports.slice(0, 3))
     }
-  }, [reports])
+  }, [filteredReports])
 
   return (
     <div className="home-page">

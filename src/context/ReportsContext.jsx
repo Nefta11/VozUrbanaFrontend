@@ -310,10 +310,11 @@ export const ReportsProvider = ({ children }) => {
   const applyFilters = useCallback((isAdmin = false) => {
     let result = [...reports]
 
-    // Filter out only "nuevo" reports for non-admin users
-    // Keep "no_aprobado" reports visible to all users so they can see their rejected reports
+    // Filtrar reportes "nuevo" y "no_aprobado" para usuarios no admin
     if (!isAdmin) {
-      result = result.filter(report => report.estado !== 'nuevo')
+      result = result.filter(
+        report => report.estado !== 'nuevo' && report.estado !== 'no_aprobado'
+      )
     }
 
     // Filter by category
