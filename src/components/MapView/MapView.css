@@ -73,16 +73,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.marker-pin::after {
-  content: '';
-  width: var(--marker-inner-size);
-  height: var(--marker-inner-size);
-  margin: var(--marker-offset) 0 0 var(--marker-offset);
-  background: white;
-  position: absolute;
-  border-radius: 50%;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-}
+
 
 /* Colores específicos por categoría de marcadores */
 .marker-saneamiento {
