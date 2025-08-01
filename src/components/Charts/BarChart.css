@@ -2,9 +2,9 @@
 .bar-chart-container {
     background: white;
     border-radius: 12px;
-    padding: 20px;
+    padding: 15px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
@@ -15,12 +15,12 @@
 
 .bar-chart-title {
     color: #1f2937;
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 600;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     text-align: center;
     border-bottom: 2px solid #e5e7eb;
-    padding-bottom: 10px;
+    padding-bottom: 8px;
 }
 
 .bar-chart-tooltip {
@@ -40,11 +40,11 @@
 /* Responsive Design para BarChart */
 @media (max-width: 768px) {
     .bar-chart-container {
-        padding: 15px;
-        margin-bottom: 15px;
+        padding: 12px;
+        margin-bottom: 12px;
     }
 
     .bar-chart-title {
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
 }
