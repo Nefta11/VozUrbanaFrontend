@@ -18,6 +18,7 @@
     "react-dom": "^18.3.1",
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.22.3",
+    "recharts": "^3.1.0",
     "voz-urbana": "file:",
     "ws": "^8.18.3"
   },
