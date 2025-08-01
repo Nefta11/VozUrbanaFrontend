@@ -8,6 +8,7 @@ import ReportDetail from './pages/ReportDetail/ReportDetail'
 import CreateReport from './pages/CreateReport/CreateReport'
 import Profile from './pages/Profile/Profile'
 import AdminDashboard from './pages/AdminDashboard/AdminDashboard'
+import PredictionDashboard from './pages/AdminDashboard/PredictionDashboard'
 import Login from './pages/Auth/Login'
 import Register from './pages/Auth/Register'
 import NotFound from './pages/NotFound/NotFound'
@@ -61,6 +62,15 @@ function App() {
             element={
               <ProtectedRoute>
                 {isAdmin ? <AdminDashboard /> : <Navigate to="/" />}
+              </ProtectedRoute>
+            }
+          />
+          {/* ✅ NUEVA RUTA PARA PREDICCIONES */}
+          <Route
+            path="/predictions"
+            element={
+              <ProtectedRoute>
+                {isAdmin ? <PredictionDashboard /> : <Navigate to="/" />}
               </ProtectedRoute>
             }
           />

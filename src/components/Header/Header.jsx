@@ -11,7 +11,8 @@ import {
   PlusCircle,
   LogIn,
   UserPlus,
-  BarChart2
+  BarChart2,
+  TrendingUp
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useNotification } from '../../hooks/useNotification'
@@ -140,6 +141,13 @@ const Header = memo(() => {
         label: 'Dashboard',
         icon: BarChart2
       })
+
+    // ✅ NUEVO - Agregar Predicciones solo para admin
+    mainItems.push({
+      to: '/predictions',
+      label: 'Predicciones',
+      icon: TrendingUp
+    })
     }
 
     return mainItems
