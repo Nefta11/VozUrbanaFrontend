@@ -7,6 +7,7 @@ import Reports from './pages/Reports/Reports'
 import ReportDetail from './pages/ReportDetail/ReportDetail'
 import CreateReport from './pages/CreateReport/CreateReport'
 import Profile from './pages/Profile/Profile'
+import Dashboard from './pages/Dashboard/Dashboard'
 import AdminDashboard from './pages/AdminDashboard/AdminDashboard'
 import PredictionDashboard from './pages/AdminDashboard/PredictionDashboard'
 import Login from './pages/Auth/Login'
@@ -54,6 +55,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                {isAdmin ? <Dashboard /> : <Navigate to="/" />}
               </ProtectedRoute>
             }
           />
