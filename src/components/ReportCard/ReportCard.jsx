@@ -95,20 +95,67 @@ const getPriorityInfo = (priority) => {
   return REPORT_CARD_CONFIG.priority[priority] || REPORT_CARD_CONFIG.priority.media
 }
 
-// Componente de imagen optimizado
+// Agregar debugging temporal a la función getImageUrl
+const getImageUrl = (imagePath) => {
+  console.log('🔍 Procesando imagen:', imagePath); // DEBUG
+  
+  if (!imagePath) return null;
+  
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  
+  // Si ya es una URL completa, devolverla tal como está
+  if (imagePath.startsWith('http')) {
+    console.log('✅ URL completa detectada:', imagePath); // DEBUG
+    return imagePath;
+  }
+  
+  // Si es una ruta relativa, construir la URL completa
+  const fullUrl = `${baseUrl}${imagePath}`;
+  console.log('🔗 URL construida:', fullUrl); // DEBUG
+  return fullUrl;
+};
+
+// Componente de imagen optimizado - MODIFICADO
+// Mejorar el debugging en ReportImage
 const ReportImage = memo(({ report, onImageLoad, onImageError, imageLoaded, imageError }) => {
-  if (report.imagen && !imageError) {
+  const imageUrl = getImageUrl(report.imagen);
+  
+  console.log('📸 ReportImage render:', {
+    reportId: report.id,
+    imagePath: report.imagen,
+    imageUrl,
+    imageLoaded,
+    imageError
+  }); // DEBUG
+
+  const handleImageLoad = () => {
+    console.log('✅ Imagen cargada exitosamente:', imageUrl);
+    onImageLoad();
+  };
+
+  const handleImageError = (e) => {
+    console.error('❌ Error cargando imagen:', {
+      url: e.target.src,
+      reportId: report.id,
+      originalPath: report.imagen
+    });
+    onImageError();
+  };
+  
+  if (imageUrl && !imageError) {
     return (
       <>
         {!imageLoaded && (
-          <div className="loading-shimmer" style={{ height: '100%' }} aria-label="Cargando imagen" />
+          <div className="loading-shimmer" style={{ height: '200px' }} aria-label="Cargando imagen">
+            <div className="shimmer-animation"></div>
+          </div>
         )}
         <img
-          src={report.imagen}
+          src={imageUrl}
           alt={`Imagen del reporte: ${report.titulo}`}
           loading="lazy"
-          onLoad={onImageLoad}
-          onError={onImageError}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
           style={{ display: imageLoaded ? 'block' : 'none' }}
         />
       </>

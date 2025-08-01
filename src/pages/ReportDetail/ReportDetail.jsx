@@ -24,6 +24,21 @@ const ReportDetail = () => {
   const [report, setReport] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  // Función utilitaria para construir la URL completa de la imagen
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+    
+    // Si ya es una URL completa, devolverla tal como está
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // Si es una ruta relativa, construir la URL completa
+    return `${baseUrl}${imagePath}`;
+  };
   
   // Fetch report data
   useEffect(() => {
@@ -132,15 +147,23 @@ const ReportDetail = () => {
         
         <div className="report-detail-layout">
           <div className="report-main">
-            {report.imagen && (
-              <div className="report-image-container">
-                <img 
-                  src={report.imagen} 
-                  alt={report.titulo} 
-                  className="report-detail-image" 
-                />
-              </div>
-            )}
+          {report.imagen && (
+            <div className="report-image-container">
+              {/* DEBUG TEMPORAL */}
+              {console.log('Imagen original:', report.imagen)}
+              {console.log('URL construida:', getImageUrl(report.imagen))}
+              
+              <img 
+                src={getImageUrl(report.imagen)} 
+                alt={report.titulo} 
+                className="report-detail-image"
+                onError={(e) => {
+                  console.error('Error cargando imagen:', e.target.src);
+                  e.target.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
             
             <div className="report-info-card">
               <h2>Descripción</h2>

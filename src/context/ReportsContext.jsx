@@ -152,22 +152,34 @@ export const ReportsProvider = ({ children }) => {
     }
   }, [])
 
+  // 🔧 CAMBIO 1: createReport mejorado para imágenes
   const createReport = useCallback(async (reportData) => {
     setIsLoading(true)
     setError(null)
 
     try {
+      // Enviar directamente el reportData con el archivo
+      // reportsAPI.create() maneja automáticamente FormData vs JSON
       const newReport = await reportsAPI.create(reportData)
+      
+      // Actualizar la lista local de reportes
       setReports(prev => [...prev, newReport])
+      
+      // También actualizar los reportes filtrados si corresponde
       setFilteredReports(prev => [...prev, newReport])
+      
+      // Refrescar desde el servidor para asegurar sincronización
+      await fetchReports()
+      
       return newReport
     } catch (err) {
-      setError(err.message || 'Error al crear reporte')
-      return null
+      const errorMessage = err.message || 'Error al crear reporte'
+      setError(errorMessage)
+      throw new Error(errorMessage)
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [fetchReports])
 
   const updateReport = useCallback(async (id, reportData) => {
     setIsLoading(true)
@@ -310,7 +322,7 @@ export const ReportsProvider = ({ children }) => {
   const applyFilters = useCallback((isAdmin = false) => {
     let result = [...reports]
 
-    // Filtrar reportes "nuevo" y "no_aprobado" para usuarios no admin
+    // Filter out only "nuevo" reports for non-admin users
     if (!isAdmin) {
       result = result.filter(
         report => report.estado !== 'nuevo' && report.estado !== 'no_aprobado'
