@@ -14,10 +14,10 @@ const PredictionDashboard = () => {
   const ejecutarPredicciones = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const resultado = await PredictionService.ejecutarModeloHibrido();
-      
+
       if (resultado.esHibrido) {
         setPredicciones(resultado.predicciones);
         setRecomendaciones(resultado.recomendaciones);
@@ -26,7 +26,7 @@ const PredictionDashboard = () => {
         setError('El modelo actual no incluye predicciones. Solo clustering disponible.');
         setMetricas(resultado.metricas);
       }
-      
+
     } catch (err) {
       setError(`Error al obtener predicciones: ${err.message}`);
     } finally {
@@ -35,19 +35,19 @@ const PredictionDashboard = () => {
   };
 
   // ✅ USAR EL SERVICIO PARA PROCESAR DATOS
-  const datosGrafico = predicciones ? 
+  const datosGrafico = predicciones ?
     PredictionService.procesarPrediccionesParaGraficos(predicciones) : [];
 
-  const resumenZonas = predicciones ? 
+  const resumenZonas = predicciones ?
     PredictionService.obtenerResumenPorZona(predicciones) : {};
 
   return (
     <div className="prediction-dashboard">
       <div className="dashboard-header">
         <h1>Predicciones de Reportes</h1>
-        <p>Análisis predictivo y recomendaciones inteligentes</p>
-        <button 
-          onClick={ejecutarPredicciones} 
+        <p>Analisis predictivo y recomendaciones inteligentes</p>
+        <button
+          onClick={ejecutarPredicciones}
           disabled={loading}
           className="btn-execute"
         >
@@ -64,7 +64,7 @@ const PredictionDashboard = () => {
       {metricas && (
         <div className="metrics-grid">
           <div className="metric-card">
-            <h4>Precisión del Modelo</h4>
+            <h4>Precision del Modelo</h4>
             <div className="metric-value">
               MAE: {metricas.prediccion?.mae?.toFixed(2) || 'N/A'}
             </div>
@@ -72,7 +72,7 @@ const PredictionDashboard = () => {
               R²: {metricas.prediccion?.r2?.toFixed(3) || 'N/A'}
             </div>
           </div>
-          
+
           <div className="metric-card">
             <h4>Clustering</h4>
             <div className="metric-value">
@@ -97,7 +97,7 @@ const PredictionDashboard = () => {
 
       {predicciones && datosGrafico.length > 0 && (
         <>
-          {/* Gráfico de tendencias */}
+          {/* Grafico de tendencias */}
           <div className="chart-container">
             <h3>Tendencia de Reportes Predichos por Zona</h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -107,9 +107,9 @@ const PredictionDashboard = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="reportes" 
+                <Line
+                  type="monotone"
+                  dataKey="reportes"
                   stroke="#2563eb"
                   strokeWidth={2}
                   dot={{ r: 4 }}
@@ -120,7 +120,7 @@ const PredictionDashboard = () => {
 
           {/* Resumen por zonas */}
           <div className="zones-summary">
-            <h3>Resumen por Zonas Críticas</h3>
+            <h3>Resumen por Zonas Criticas</h3>
             <div className="zones-grid">
               {Object.entries(resumenZonas).map(([zona, datos]) => (
                 <div key={zona} className="zone-card">
@@ -129,7 +129,7 @@ const PredictionDashboard = () => {
                     <div>Total predicho: <strong>{datos.totalPredicho}</strong></div>
                     <div>Promedio/semana: <strong>{datos.promedioPorSemana}</strong></div>
                     <div>Pico máximo: <strong>{datos.picoMaximo}</strong></div>
-                    <div>Período: <strong>{datos.semanas} semanas</strong></div>
+                    <div>Periodo: <strong>{datos.semanas} semanas</strong></div>
                   </div>
                 </div>
               ))}
@@ -143,8 +143,8 @@ const PredictionDashboard = () => {
           <h3>Recomendaciones del Sistema</h3>
           <div className="recommendations-list">
             {recomendaciones.map((rec, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className={`recommendation-card priority-${rec.prioridad.toLowerCase()}`}
               >
                 <div className="rec-header">
@@ -166,10 +166,10 @@ const PredictionDashboard = () => {
       {!loading && !predicciones && !error && (
         <div className="empty-state">
           <h3>Sistema de Predicciones Inteligente</h3>
-          <p>Ejecuta el modelo híbrido para obtener predicciones de reportes y recomendaciones para las zonas críticas de la ciudad.</p>
+          <p>Ejecuta el modelo hibrido para obtener predicciones de reportes y recomendaciones para las zonas criticas de la ciudad.</p>
           <div className="features-list">
-            <div className="feature">✅ Análisis de patrones históricos</div>
-            <div className="feature">✅ Clustering de zonas críticas</div>
+            <div className="feature">✅ Analisis de patrones historicos</div>
+            <div className="feature">✅ Clustering de zonas criticas</div>
             <div className="feature">✅ Predicciones futuras</div>
             <div className="feature">✅ Recomendaciones inteligentes</div>
           </div>
