@@ -2,10 +2,11 @@
 .line-chart-container {
     background: white;
     border-radius: 12px;
-    padding: 15px;
+    padding: 12px 15px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    height: fit-content;
 }
 
 .line-chart-container:hover {
@@ -17,10 +18,10 @@
     color: #1f2937;
     font-size: 1.1rem;
     font-weight: 600;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     text-align: center;
     border-bottom: 2px solid #e5e7eb;
-    padding-bottom: 8px;
+    padding-bottom: 6px;
 }
 
 .line-chart-tooltip {
