@@ -42,21 +42,39 @@ const Dashboard = () => {
     // Estadísticas básicas
     const totalReports = reports.length;
     const totalComments = reports.reduce((sum, report) => sum + (report.comentarios?.length || 0), 0);
-    const approvedReports = reports.filter(report => report.status === 'aprobado').length;
-    const uniqueUsers = new Set(reports.map(report => report.usuario_id)).size;
+    const approvedReports = reports.filter(report => report.estado === 'aprobado').length;
+    const uniqueUsers = new Set(reports.map(report => report.usuario?.id || report.usuario_id)).size;
 
-    // Datos por categoría
-    const categoriesStats = categories.map(category => ({
-      name: category.nombre,
-      value: reports.filter(report => report.categoria_id === category.id).length
-    })).filter(item => item.value > 0);
+    // Datos por categoría - mapear por nombre de categoría
+    const categoriesStats = categories.map(category => {
+      // Contar reportes que coincidan con el nombre normalizado de la categoría
+      const categoryReports = reports.filter(report => {
+        // Verificar si el reporte tiene categoria_id o categoria (nombre)
+        if (report.categoria_id) {
+          return report.categoria_id === category.id;
+        } else if (report.categoria) {
+          // Normalizar nombres para comparación
+          const normalizedReportCategory = report.categoria.toLowerCase().replace(/\s+/g, '_');
+          const normalizedCategoryName = category.nombre.toLowerCase().replace(/\s+/g, '_');
+          return normalizedReportCategory === normalizedCategoryName || 
+                 normalizedReportCategory === normalizedCategoryName.replace('_publica', '_publica') ||
+                 (normalizedReportCategory === 'otros' && normalizedCategoryName === 'otros');
+        }
+        return false;
+      });
+      
+      return {
+        name: category.nombre,
+        value: categoryReports.length
+      };
+    }).filter(item => item.value > 0);
 
-    // Datos por estado
+    // Datos por estado - usar 'estado' en lugar de 'status'
     const statusStats = [
-      { name: 'Aprobados', value: reports.filter(r => r.status === 'aprobado').length },
-      { name: 'Pendientes', value: reports.filter(r => r.status === 'nuevo').length },
-      { name: 'No Aprobados', value: reports.filter(r => r.status === 'no_aprobado').length },
-      { name: 'En Proceso', value: reports.filter(r => r.status === 'en_proceso').length }
+      { name: 'Aprobados', value: reports.filter(r => r.estado === 'aprobado').length },
+      { name: 'Pendientes', value: reports.filter(r => r.estado === 'nuevo').length },
+      { name: 'No Aprobados', value: reports.filter(r => r.estado === 'no_aprobado').length },
+      { name: 'En Proceso', value: reports.filter(r => r.estado === 'en_proceso').length }
     ].filter(item => item.value > 0);
 
     // Datos mensuales (últimos 6 meses)
