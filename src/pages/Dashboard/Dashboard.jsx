@@ -190,14 +190,29 @@ const Dashboard = () => {
             <CustomPieChart
               data={statsData.categoriesData}
               title="Reportes por Categoría"
-              colors={['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']}
+              colors={[
+                '#3b82f6', // Azul moderno
+                '#ef4444', // Rojo vibrante
+                '#10b981', // Verde esmeralda
+                '#f59e0b', // Ámbar
+                '#8b5cf6', // Violeta
+                '#06b6d4', // Cian
+                '#f97316', // Naranja
+                '#84cc16', // Lima
+                '#ec4899'  // Rosa
+              ]}
             />
           </div>
           <div className="chart-col-half">
             <CustomPieChart
               data={statsData.statusData}
               title="Reportes por Estado"
-              colors={['#10b981', '#f59e0b', '#ef4444', '#6b7280']}
+              colors={[
+                '#10b981', // Verde para aprobados
+                '#f59e0b', // Ámbar para pendientes
+                '#ef4444', // Rojo para no aprobados
+                '#3b82f6'  // Azul para en proceso
+              ]}
             />
           </div>
         </div>
