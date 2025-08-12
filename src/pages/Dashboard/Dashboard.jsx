@@ -42,7 +42,11 @@ const Dashboard = () => {
     // Estadísticas básicas
     const totalReports = reports.length;
     const totalComments = reports.reduce((sum, report) => sum + (report.comentarios?.length || 0), 0);
-    const approvedReports = reports.filter(report => report.estado === 'aprobado').length;
+    const approvedReports = reports.filter(report => 
+      report.estado === 'aprobado' || 
+      report.estado === 'resuelto' || 
+      report.estado === 'cerrado'
+    ).length;
     const uniqueUsers = new Set(reports.map(report => report.usuario?.id || report.usuario_id)).size;
 
     // Datos por categoría - mapear por nombre de categoría
@@ -74,7 +78,9 @@ const Dashboard = () => {
       { name: 'Aprobados', value: reports.filter(r => r.estado === 'aprobado').length },
       { name: 'Pendientes', value: reports.filter(r => r.estado === 'nuevo').length },
       { name: 'No Aprobados', value: reports.filter(r => r.estado === 'no_aprobado').length },
-      { name: 'En Proceso', value: reports.filter(r => r.estado === 'en_proceso').length }
+      { name: 'En Proceso', value: reports.filter(r => r.estado === 'en_proceso').length },
+      { name: 'Resueltos', value: reports.filter(r => r.estado === 'resuelto').length },
+      { name: 'Cerrados', value: reports.filter(r => r.estado === 'cerrado').length }
     ].filter(item => item.value > 0);
 
     // Datos mensuales (últimos 6 meses)
@@ -174,7 +180,7 @@ const Dashboard = () => {
           changeType="positive"
         />
         <StatsCard
-          title="Reportes Aprobados"
+          title="Reportes Exitosos"
           value={statsData.approvedReports}
           icon={<CheckCircle />}
           color="#8b5cf6"
@@ -211,7 +217,9 @@ const Dashboard = () => {
                 '#10b981', // Verde para aprobados
                 '#f59e0b', // Ámbar para pendientes
                 '#ef4444', // Rojo para no aprobados
-                '#3b82f6'  // Azul para en proceso
+                '#3b82f6', // Azul para en proceso
+                '#22c55e', // Verde más claro para resueltos
+                '#6b7280'  // Gris para cerrados
               ]}
             />
           </div>
@@ -268,7 +276,7 @@ const Dashboard = () => {
           <div className="info-card">
             <TrendingUp className="info-icon" />
             <div>
-              <h3>Tasa de Aprobación</h3>
+              <h3>Tasa de Éxito</h3>
               <p>{statsData.totalReports > 0 ? Math.round((statsData.approvedReports / statsData.totalReports) * 100) : 0}%</p>
             </div>
           </div>
