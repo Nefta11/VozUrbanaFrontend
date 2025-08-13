@@ -141,6 +141,7 @@ export const reportsAPI = {
               id: report.id,
               titulo: report.titulo,
               descripcion: report.descripcion,
+              categoria_id: report.categoria_id, // Mantener ID original
               categoria:
                 this.normalizeCategoryName(
                   categoriesMap[report.categoria_id]
@@ -161,6 +162,7 @@ export const reportsAPI = {
                 id: report.User?.id || report.usuario_id,
                 nombre: report.User?.nombre || "Usuario",
               },
+              usuario_id: report.User?.id || report.usuario_id, // Agregar usuario_id para compatibilidad
               imagen: report.imagen_path,
               comentarios: commentsResponse.data.map((comment) => ({
                 id: comment.id,
@@ -178,6 +180,7 @@ export const reportsAPI = {
               id: report.id,
               titulo: report.titulo,
               descripcion: report.descripcion,
+              categoria_id: report.categoria_id, // Mantener ID original
               categoria:
                 this.normalizeCategoryName(
                   categoriesMap[report.categoria_id]
@@ -198,6 +201,7 @@ export const reportsAPI = {
                 id: report.User?.id || report.usuario_id,
                 nombre: report.User?.nombre || "Usuario",
               },
+              usuario_id: report.User?.id || report.usuario_id, // Agregar usuario_id para compatibilidad
               imagen: report.imagen_path,
               comentarios: [],
             };

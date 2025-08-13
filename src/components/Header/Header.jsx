@@ -112,12 +112,14 @@ const Header = memo(() => {
   const getNavigationItems = useCallback(() => {
     const mainItems = []
 
-    // Elementos base siempre disponibles
-    mainItems.push({
-      to: '/',
-      label: 'Inicio',
-      icon: Home
-    })
+    // Solo mostrar "Inicio" para usuarios que NO son administradores
+    if (!isAdmin) {
+      mainItems.push({
+        to: '/',
+        label: 'Inicio',
+        icon: Home
+      })
+    }
 
     mainItems.push({
       to: '/reports',
@@ -164,14 +166,15 @@ const Header = memo(() => {
         icon: Settings,
         className: 'admin-link'
       })
+    } else {
+      // Solo mostrar "Mi Perfil" para usuarios que NO son administradores
+      items.push({
+        to: '/profile',
+        label: 'Mi Perfil',
+        icon: User,
+        className: 'profile-link'
+      })
     }
-
-    items.push({
-      to: '/profile',
-      label: 'Mi Perfil',
-      icon: User,
-      className: 'profile-link'
-    })
 
     return items
   }, [isAdmin])
