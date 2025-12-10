@@ -1,5 +1,5 @@
 # 🏙️ Voz Urbana Frontend
-
+ 
 Una plataforma ciudadana moderna para reportar y gestionar incidencias urbanas, construida con React y Vite.
 
 ![Voz Urbana](src/assets/logoVozUrbana.png)
