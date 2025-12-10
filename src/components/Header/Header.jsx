@@ -191,8 +191,8 @@ const Header = memo(() => {
           >
             <div className="logo-content">
               <img
-                src="/src/assets/logoVozUrbana.png"
-                alt="Voz Urbana"
+                src="/logo.png"
+                alt="Voz Urbana Logo"
                 className="logo-icon"
               />
               <h1>Voz Urbana</h1>
