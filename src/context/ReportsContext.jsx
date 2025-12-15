@@ -74,9 +74,10 @@ export const ReportsProvider = ({ children }) => {
     setError(null)
 
     try {
-      // Modo híbrido: intenta obtener datos frescos del servidor
-      const data = await syncService.getReports({ forceRefresh: isOnline })
+      // Siempre cargar desde IndexedDB
+      const data = await reportsAPI.getAll()
       setReports(data)
+      console.log('Reportes cargados:', data.length)
       return data
     } catch (err) {
       setError(err.message || 'Error al cargar reportes')
@@ -84,27 +85,28 @@ export const ReportsProvider = ({ children }) => {
     } finally {
       setIsLoading(false)
     }
-  }, [isOnline])
+  }, [])
 
   const fetchCategories = useCallback(async () => {
     try {
-      // Modo híbrido para categorías
-      const data = await syncService.getCategories({ forceRefresh: isOnline })
+      // Obtener categorías (con fallback local)
+      const data = await reportsAPI.getCategories()
       setCategories(data)
+      console.log('Categorías cargadas:', data.length)
       return data
     } catch (err) {
       console.error('Error al cargar categorías:', err)
       return []
     }
-  }, [isOnline])
+  }, [])
 
   const getReportById = useCallback(async (id) => {
     setIsLoading(true)
     setError(null)
 
     try {
-      // Modo híbrido: intenta servidor si hay conexión, sino usa caché
-      const report = await syncService.getReportById(id, { forceRefresh: isOnline })
+      // Obtener desde IndexedDB
+      const report = await reportsAPI.getById(id)
       return report
     } catch (err) {
       setError(err.message || `Error al cargar el reporte ${id}`)
@@ -112,7 +114,7 @@ export const ReportsProvider = ({ children }) => {
     } finally {
       setIsLoading(false)
     }
-  }, [isOnline])
+  }, [])
 
   const getReportsByUser = useCallback(async (userId) => {
     setIsLoading(true)
@@ -206,30 +208,20 @@ export const ReportsProvider = ({ children }) => {
     }
   }, [])
 
-  // 🔧 CAMBIO 1: createReport mejorado para imágenes e híbrido offline/online
+  // Crear reporte usando IndexedDB directamente
   const createReport = useCallback(async (reportData) => {
     setIsLoading(true)
     setError(null)
 
     try {
-      let newReport
-
-      if (isOnline) {
-        // Modo online: enviar al servidor directamente
-        newReport = await reportsAPI.create(reportData)
-      } else {
-        // Modo offline: guardar localmente y añadir a cola
-        newReport = await syncService.createReportOffline(reportData)
-      }
+      // Siempre crear en IndexedDB directamente
+      const newReport = await reportsAPI.create(reportData)
 
       // Actualizar la lista local de reportes
       setReports(prev => [...prev, newReport])
       setFilteredReports(prev => [...prev, newReport])
 
-      // Si estamos online, refrescar desde el servidor
-      if (isOnline) {
-        await fetchReports()
-      }
+      console.log('Reporte creado exitosamente:', newReport)
 
       return newReport
     } catch (err) {
@@ -239,7 +231,7 @@ export const ReportsProvider = ({ children }) => {
     } finally {
       setIsLoading(false)
     }
-  }, [fetchReports, isOnline])
+  }, [])
 
   const updateReport = useCallback(async (id, reportData) => {
     setIsLoading(true)
