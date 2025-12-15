@@ -1,6 +1,8 @@
 import { createContext, useState, useCallback, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { reportsAPI } from '../services/reportsAPI'
+import syncService from '../services/syncService'
+import useNetworkStatus from '../hooks/useNetworkStatus'
 
 export const ReportsContext = createContext()
 
@@ -16,15 +18,65 @@ export const ReportsProvider = ({ children }) => {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [syncStatus, setSyncStatus] = useState(null)
+
+  // Hook para detectar estado de red
+  const { isOnline } = useNetworkStatus({
+    onOnline: async () => {
+      console.log('Conexión restaurada, sincronizando...')
+      await syncData()
+    },
+    onOffline: () => {
+      console.log('Modo offline activado')
+      setSyncStatus('offline')
+    }
+  })
+
+  // Función de sincronización completa
+  const syncData = useCallback(async () => {
+    if (isSyncing) return
+
+    setIsSyncing(true)
+    setSyncStatus('syncing')
+
+    try {
+      const result = await syncService.syncAll()
+      if (result.success) {
+        setSyncStatus('success')
+        // Recargar datos después de sincronizar
+        await fetchReportsFromCache()
+      } else {
+        setSyncStatus('error')
+      }
+    } catch (err) {
+      console.error('Error en sincronización:', err)
+      setSyncStatus('error')
+    } finally {
+      setIsSyncing(false)
+    }
+  }, [isSyncing])
+
+  // Cargar reportes desde caché local (híbrido)
+  const fetchReportsFromCache = useCallback(async () => {
+    try {
+      const data = await syncService.getReports({ forceRefresh: false })
+      setReports(data)
+      return data
+    } catch (err) {
+      console.error('Error cargando desde caché:', err)
+      return []
+    }
+  }, [])
 
   const fetchReports = useCallback(async () => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const data = await reportsAPI.getAll()
+      // Modo híbrido: intenta obtener datos frescos del servidor
+      const data = await syncService.getReports({ forceRefresh: isOnline })
       setReports(data)
-      // Don't set filteredReports here - let the useEffect handle the filtering
       return data
     } catch (err) {
       setError(err.message || 'Error al cargar reportes')
@@ -32,25 +84,27 @@ export const ReportsProvider = ({ children }) => {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [isOnline])
 
   const fetchCategories = useCallback(async () => {
     try {
-      const data = await reportsAPI.getCategories()
+      // Modo híbrido para categorías
+      const data = await syncService.getCategories({ forceRefresh: isOnline })
       setCategories(data)
       return data
     } catch (err) {
       console.error('Error al cargar categorías:', err)
       return []
     }
-  }, [])
+  }, [isOnline])
 
   const getReportById = useCallback(async (id) => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const report = await reportsAPI.getById(id)
+      // Modo híbrido: intenta servidor si hay conexión, sino usa caché
+      const report = await syncService.getReportById(id, { forceRefresh: isOnline })
       return report
     } catch (err) {
       setError(err.message || `Error al cargar el reporte ${id}`)
@@ -58,7 +112,7 @@ export const ReportsProvider = ({ children }) => {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [isOnline])
 
   const getReportsByUser = useCallback(async (userId) => {
     setIsLoading(true)
@@ -152,25 +206,31 @@ export const ReportsProvider = ({ children }) => {
     }
   }, [])
 
-  // 🔧 CAMBIO 1: createReport mejorado para imágenes
+  // 🔧 CAMBIO 1: createReport mejorado para imágenes e híbrido offline/online
   const createReport = useCallback(async (reportData) => {
     setIsLoading(true)
     setError(null)
 
     try {
-      // Enviar directamente el reportData con el archivo
-      // reportsAPI.create() maneja automáticamente FormData vs JSON
-      const newReport = await reportsAPI.create(reportData)
-      
+      let newReport
+
+      if (isOnline) {
+        // Modo online: enviar al servidor directamente
+        newReport = await reportsAPI.create(reportData)
+      } else {
+        // Modo offline: guardar localmente y añadir a cola
+        newReport = await syncService.createReportOffline(reportData)
+      }
+
       // Actualizar la lista local de reportes
       setReports(prev => [...prev, newReport])
-      
-      // También actualizar los reportes filtrados si corresponde
       setFilteredReports(prev => [...prev, newReport])
-      
-      // Refrescar desde el servidor para asegurar sincronización
-      await fetchReports()
-      
+
+      // Si estamos online, refrescar desde el servidor
+      if (isOnline) {
+        await fetchReports()
+      }
+
       return newReport
     } catch (err) {
       const errorMessage = err.message || 'Error al crear reporte'
@@ -179,14 +239,23 @@ export const ReportsProvider = ({ children }) => {
     } finally {
       setIsLoading(false)
     }
-  }, [fetchReports])
+  }, [fetchReports, isOnline])
 
   const updateReport = useCallback(async (id, reportData) => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const updatedReport = await reportsAPI.update(id, reportData)
+      let updatedReport
+
+      if (isOnline) {
+        // Modo online: actualizar en servidor
+        updatedReport = await reportsAPI.update(id, reportData)
+      } else {
+        // Modo offline: actualizar localmente y añadir a cola
+        updatedReport = await syncService.updateReportOffline(id, reportData)
+      }
+
       setReports(prev =>
         prev.map(report => report.id === id ? updatedReport : report)
       )
@@ -200,7 +269,7 @@ export const ReportsProvider = ({ children }) => {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [isOnline])
 
   const voteReport = useCallback(async (id, voteType) => {
     try {
@@ -408,7 +477,12 @@ export const ReportsProvider = ({ children }) => {
     addComment,
     updateComment,
     deleteComment,
-    setFilters
+    setFilters,
+    // Nuevas propiedades para modo híbrido
+    isOnline,
+    isSyncing,
+    syncStatus,
+    syncData
   }
 
   return (
