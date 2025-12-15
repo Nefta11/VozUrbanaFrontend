@@ -217,7 +217,7 @@ const Register = () => {
         <div className="auth-right">
           <div className="auth-right-content">
             <div className="auth-brand">
-              <img src="/src/assets/logoVozUrbana.png" alt="Voz Urbana" />
+              <img src="/logo.png" alt="Voz Urbana" />
               <h2>VOZ URBANA</h2>
             </div>
             <h3>CONECTA. REPORTA. TRANSFORMA.</h3>

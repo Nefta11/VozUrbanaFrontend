@@ -2,6 +2,7 @@ import { createContext, useState, useCallback, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { authAPI } from '../services/authAPI'
 import { setAuthLogoutHandler } from '../config/api'
+import indexedDBService from '../services/indexedDBService'
 
 export const AuthContext = createContext()
 
@@ -19,7 +20,18 @@ export const AuthProvider = ({ children }) => {
       const userData = await authAPI.login(email, password)
       setUser(userData)
       setIsAuthenticated(true)
+
+      // Guardar en localStorage (rápido)
       localStorage.setItem('user', JSON.stringify(userData))
+
+      // Guardar también en IndexedDB (persistencia robusta)
+      try {
+        await indexedDBService.setMetadata('user', userData)
+        await indexedDBService.setMetadata('lastLoginTime', Date.now())
+      } catch (dbErr) {
+        console.warn('Error guardando en IndexedDB:', dbErr)
+      }
+
       return userData
     } catch (err) {
       setError(err.message || 'Error al iniciar sesión')
@@ -45,10 +57,19 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     setUser(null)
     setIsAuthenticated(false)
     authAPI.logout() // Esto limpia el token y el user del localStorage
+
+    // Limpiar IndexedDB también
+    try {
+      await indexedDBService.setMetadata('user', null)
+      // Opcionalmente limpiar todos los datos locales al cerrar sesión
+      // await indexedDBService.clearAllData()
+    } catch (dbErr) {
+      console.warn('Error limpiando IndexedDB:', dbErr)
+    }
   }, [])
 
   // Función para manejar logout automático cuando el token expire
@@ -59,11 +80,24 @@ export const AuthProvider = ({ children }) => {
     setError('Su sesión ha expirado. Por favor, inicie sesión nuevamente.')
   }, [])
 
-  const checkAuth = useCallback(() => {
+  const checkAuth = useCallback(async () => {
     setIsLoading(true)
 
-    const storedUser = localStorage.getItem('user')
+    let storedUser = localStorage.getItem('user')
     const storedToken = localStorage.getItem('token')
+
+    // Si no hay datos en localStorage, intentar recuperar de IndexedDB
+    if (!storedUser && storedToken) {
+      try {
+        const dbUser = await indexedDBService.getMetadata('user')
+        if (dbUser) {
+          storedUser = JSON.stringify(dbUser)
+          localStorage.setItem('user', storedUser)
+        }
+      } catch (dbErr) {
+        console.warn('Error recuperando de IndexedDB:', dbErr)
+      }
+    }
 
     if (storedUser && storedToken) {
       try {
@@ -75,6 +109,7 @@ export const AuthProvider = ({ children }) => {
           // Token expirado, limpiar todo
           localStorage.removeItem('user')
           localStorage.removeItem('token')
+          await indexedDBService.setMetadata('user', null)
           setError('Sesión expirada. Por favor, inicie sesión nuevamente.')
         } else {
           // Token válido
