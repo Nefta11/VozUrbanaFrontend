@@ -204,7 +204,7 @@ const Register = () => {
                     <UserPlus size={20} />
                     Crear Cuenta
                   </>
-                )}
+                )} 
               </button>
             </form>
 
