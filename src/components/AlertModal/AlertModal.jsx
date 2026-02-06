@@ -7,11 +7,11 @@ import './AlertModal.css'
 const AlertModal = ({
   isOpen,
   onClose,
-  title,
-  message,
+  title = null,
+  message = null,
   type = 'info',
-  primaryAction,
-  secondaryAction
+  primaryAction = null,
+  secondaryAction = null
 }) => {
   // Manejo de la tecla ESC
   const handleEscKey = useCallback((event) => {
@@ -117,14 +117,6 @@ AlertModal.propTypes = {
     label: PropTypes.string.isRequired,
     icon: PropTypes.node
   })
-}
-
-AlertModal.defaultProps = {
-  type: 'info',
-  title: null,
-  message: null,
-  primaryAction: null,
-  secondaryAction: null
 }
 
 export default AlertModal

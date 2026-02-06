@@ -1,5 +1,4 @@
 import apiClient from "../config/api";
-import indexedDBService from "./indexedDBService";
 
 export const reportsAPI = {
   // Helper function to normalize category names for consistent mapping
@@ -112,13 +111,19 @@ export const reportsAPI = {
     }
   },
 
-  // Get all reports - Usando IndexedDB directamente
+  // Get all reports - Usando backend API
   async getAll() {
     try {
-      // Obtener reportes de IndexedDB
-      const reports = await indexedDBService.getReports();
+      const response = await apiClient.get("/reports");
+      const reports = response.data;
 
-      // Primero obtenemos las categorías para mapear IDs a nombres
+      // Verificar que tenemos un array
+      if (!Array.isArray(reports)) {
+        console.warn("Backend no devolvió un array de reportes:", reports);
+        return [];
+      }
+
+      // Obtener categorías para mapeo
       const categories = await this.getCategories();
       const categoriesMap = categories.reduce((acc, cat) => {
         acc[cat.id] = cat.nombre;
@@ -126,35 +131,70 @@ export const reportsAPI = {
       }, {});
 
       // Procesar cada reporte para asegurar la estructura correcta
-      const reportsWithData = reports.map((report) => ({
-        id: report.id,
-        titulo: report.titulo,
-        descripcion: report.descripcion,
-        categoria_id: report.categoria_id,
-        categoria: report.categoria || this.normalizeCategoryName(categoriesMap[report.categoria_id]) || "otros",
-        ubicacion: report.ubicacion,
-        latitud: report.latitud,
-        longitud: report.longitud,
-        estado: report.estado,
-        prioridad: report.prioridad,
-        votos_positivos: report.votos_positivos || 0,
-        votos_negativos: report.votos_negativos || 0,
-        votos_usuarios: report.votos_usuarios || {},
-        fecha_creacion: report.fecha_creacion,
-        fecha_actualizacion: report.fecha_actualizacion,
-        asignado_a: report.asignado_a,
-        notas_admin: report.notas_admin || [],
-        usuario: report.usuario || { id: report.usuario_id, nombre: "Usuario" },
-        usuario_id: report.usuario_id,
-        imagen: report.imagen,
-        comentarios: report.comentarios || [],
-      }));
+      const reportsWithData = await Promise.all(
+        reports.map(async (report) => {
+          // Obtener votos para cada reporte
+          try {
+            const votesResponse = await apiClient.get(`/votos/${report.id}`);
+            const votesData = votesResponse.data;
 
-      console.log(`Reportes cargados de IndexedDB: ${reportsWithData.length}`);
+            return {
+              id: report.id,
+              titulo: report.titulo,
+              descripcion: report.descripcion,
+              categoria_id: report.categoria_id,
+              categoria: categoriesMap[report.categoria_id] || "Otros",
+              ubicacion: report.ubicacion,
+              latitud: report.latitud,
+              longitud: report.longitud,
+              estado: report.estado,
+              prioridad: report.prioridad,
+              votos_positivos: votesData.up || 0,
+              votos_negativos: votesData.down || 0,
+              votos_usuarios: {},
+              fecha_creacion: report.fecha_creacion || report.createdAt,
+              fecha_actualizacion: report.fecha_actualizacion || report.updatedAt,
+              asignado_a: report.asignado_a,
+              notas_admin: report.notas_admin || [],
+              usuario: report.User || { id: report.usuario_id, nombre: "Usuario" },
+              usuario_id: report.usuario_id,
+              imagen: report.imagen_path || report.imagen_url,
+              comentarios: report.comentarios || [],
+            };
+          } catch (voteError) {
+            console.warn(`Error obteniendo votos para reporte ${report.id}:`, voteError);
+            return {
+              id: report.id,
+              titulo: report.titulo,
+              descripcion: report.descripcion,
+              categoria_id: report.categoria_id,
+              categoria: categoriesMap[report.categoria_id] || "Otros",
+              ubicacion: report.ubicacion,
+              latitud: report.latitud,
+              longitud: report.longitud,
+              estado: report.estado,
+              prioridad: report.prioridad,
+              votos_positivos: 0,
+              votos_negativos: 0,
+              votos_usuarios: {},
+              fecha_creacion: report.fecha_creacion || report.createdAt,
+              fecha_actualizacion: report.fecha_actualizacion || report.updatedAt,
+              asignado_a: report.asignado_a,
+              notas_admin: report.notas_admin || [],
+              usuario: report.User || { id: report.usuario_id, nombre: "Usuario" },
+              usuario_id: report.usuario_id,
+              imagen: report.imagen_path || report.imagen_url,
+              comentarios: report.comentarios || [],
+            };
+          }
+        })
+      );
+
+      console.log(`Reportes cargados del backend: ${reportsWithData.length}`);
       return reportsWithData;
     } catch (error) {
       console.error("Error en getAll():", error);
-      const message = error.message || "Error al obtener reportes";
+      const message = error.response?.data?.message || "Error al obtener reportes";
       throw new Error(message);
     }
   },
@@ -193,52 +233,73 @@ export const reportsAPI = {
     }
   },
 
-  // Get report by ID - Usando IndexedDB directamente
+  // Get report by ID - Usando backend API
   async getById(id) {
     try {
-      const report = await indexedDBService.getReportById(parseInt(id));
+      const response = await apiClient.get(`/reports/${id}`);
+      const report = response.data; 
 
+      // Verificar que el reporte existe
       if (!report) {
         throw new Error("Reporte no encontrado");
       }
 
-      // Primero obtenemos las categorías para mapear ID a nombre
+      // Obtener categorías para mapear ID a nombre
       const categories = await this.getCategories();
       const categoriesMap = categories.reduce((acc, cat) => {
         acc[cat.id] = cat.nombre;
         return acc;
       }, {});
 
+      // Obtener votos del reporte
+      let votesData = { up: 0, down: 0};
+      try {
+        const votesResponse = await apiClient.get(`/votos/${id}`);
+        votesData = votesResponse.data;
+      } catch (voteError) {
+        console.warn(`Error obteniendo votos para reporte ${id}:`, voteError);
+      }
+
+      // Obtener comentarios del reporte
+      let comentarios = [];
+      try {
+        const commentsResponse = await apiClient.get(`/comentarios/${id}`);
+        comentarios = commentsResponse.data.comentarios || [];
+      } catch (commentError) {
+        console.warn(`Error obteniendo comentarios para reporte ${id}:`, commentError);
+      }
+
       const processedReport = {
         id: report.id,
         titulo: report.titulo,
         descripcion: report.descripcion,
         categoria_id: report.categoria_id,
-        categoria: report.categoria || categoriesMap[report.categoria_id] || "Otros",
+        categoria: categoriesMap[report.categoria_id] || "Otros",
         ubicacion: report.ubicacion,
         latitud: report.latitud,
         longitud: report.longitud,
         estado: report.estado,
         prioridad: report.prioridad,
-        votos_positivos: report.votos_positivos || 0,
-        votos_negativos: report.votos_negativos || 0,
-        votos_usuarios: report.votos_usuarios || {},
-        fecha_creacion: report.fecha_creacion,
-        fecha_actualizacion: report.fecha_actualizacion,
+        votos_positivos: votesData.up || 0,
+        votos_negativos: votesData.down || 0,
+        votos_usuarios: {},
+        fecha_creacion: report.fecha_creacion || report.createdAt,
+        fecha_actualizacion: report.fecha_actualizacion || report.updatedAt,
         asignado_a: report.asignado_a,
         notas_admin: report.notas_admin || [],
-        usuario: report.usuario || {
+        usuario: report.User || {
           id: report.usuario_id,
           nombre: "Usuario",
           email: "",
         },
-        imagen: report.imagen,
-        comentarios: report.comentarios || [],
+        imagen: report.imagen_path || report.imagen_url,
+        comentarios: comentarios,
       };
 
       return processedReport;
     } catch (error) {
-      const message = error.message || "Error al obtener reporte";
+      console.error("Error en getById():", error);
+      const message = error.response?.data?.message || "Error al obtener reporte";
       throw new Error(message);
     }
   },
@@ -333,66 +394,73 @@ export const reportsAPI = {
     });
   },
 
-  // Create new report - Usando IndexedDB directamente
+  // Create new report - Usando backend API
   async create(reportData) {
     try {
-      // Obtener usuario actual del localStorage
-      const currentUser = localStorage.getItem('user');
-      const user = currentUser ? JSON.parse(currentUser) : { id: 1, nombre: 'Usuario' };
+      // Preparar FormData para enviar al backend (incluyendo imagen si existe)
+      const formData = new FormData();
+      formData.append('titulo', reportData.titulo);
+      formData.append('descripcion', reportData.descripcion);
+      formData.append('categoria_id', reportData.categoria);
+      formData.append('ubicacion', reportData.ubicacion);
+      formData.append('latitud', reportData.latitud);
+      formData.append('longitud', reportData.longitud);
+      formData.append('prioridad', reportData.prioridad || 'media');
 
-      // Obtener todos los reportes existentes para generar un nuevo ID
-      const existingReports = await indexedDBService.getReports();
-      const newId = existingReports.length > 0
-        ? Math.max(...existingReports.map(r => r.id)) + 1
-        : 1;
-
-      // Convertir imagen a base64 si existe
-      let imagenBase64 = null;
+      // Añadir imagen si existe
       if (reportData.imagen && reportData.imagen instanceof File) {
-        imagenBase64 = await this.fileToBase64(reportData.imagen);
+        formData.append('imagen', reportData.imagen);
       }
 
-      const now = new Date().toISOString();
+      const response = await apiClient.post('/reports', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
-      // Crear objeto de reporte
-      const newReport = {
-        id: newId,
-        titulo: reportData.titulo,
-        descripcion: reportData.descripcion,
-        categoria_id: parseInt(reportData.categoria),
-        categoria: this.normalizeCategoryName(
-          await this.getCategoryName(parseInt(reportData.categoria))
-        ),
-        ubicacion: reportData.ubicacion,
-        latitud: parseFloat(reportData.latitud),
-        longitud: parseFloat(reportData.longitud),
-        estado: 'en_proceso',
-        prioridad: reportData.prioridad || 'media',
+      const newReport = response.data.report;
+
+      // Obtener categorías para mapear el nombre
+      const categories = await this.getCategories();
+      const categoriesMap = categories.reduce((acc, cat) => {
+        acc[cat.id] = cat.nombre;
+        return acc;
+      }, {});
+
+      // Retornar el reporte con la estructura esperada por el frontend
+      const processedReport = {
+        id: newReport.id,
+        titulo: newReport.titulo,
+        descripcion: newReport.descripcion,
+        categoria_id: newReport.categoria_id,
+        categoria: categoriesMap[newReport.categoria_id] || "Otros",
+        ubicacion: newReport.ubicacion,
+        latitud: newReport.latitud,
+        longitud: newReport.longitud,
+        estado: newReport.estado,
+        prioridad: newReport.prioridad,
         votos_positivos: 0,
         votos_negativos: 0,
         votos_total: 0,
         votos_usuarios: {},
-        fecha_creacion: now,
-        fecha_actualizacion: now,
-        asignado_a: null,
+        fecha_creacion: newReport.fecha_creacion || newReport.createdAt,
+        fecha_actualizacion: newReport.fecha_actualizacion || newReport.updatedAt,
+        asignado_a: newReport.asignado_a,
         notas_admin: [],
-        usuario_id: user.id,
-        usuario: {
-          id: user.id,
-          nombre: user.nombre,
+        usuario_id: newReport.usuario_id,
+        usuario: newReport.User || {
+          id: newReport.usuario_id,
+          nombre: "Usuario",
         },
-        imagen: imagenBase64,
+        imagen: newReport.imagen_path || newReport.imagen_url,
         comentarios: [],
       };
 
-      // Guardar en IndexedDB
-      await indexedDBService.saveReport(newReport);
-
-      console.log('Reporte creado localmente en IndexedDB:', newReport);
-
-      return newReport;
+      console.log('Reporte creado en el backend:', processedReport);
+      return processedReport;
     } catch (error) {
-      const message = error.message || "Error al crear reporte";
+      console.error("Error creating report:", error);
+      const message = error.response?.data?.message || "Error al crear reporte";
       throw new Error(message);
     }
   },
